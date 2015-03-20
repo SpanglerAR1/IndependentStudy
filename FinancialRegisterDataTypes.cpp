@@ -38,6 +38,7 @@ struct	budgcat_t
 	time_t		date;	// If date is 0, then assumed to be monthly
 };
 
+// Declaration, so that I can reference account_t in fintrans_t
 struct account_t;
 
 struct	fintrans_t
@@ -58,18 +59,18 @@ struct	account_t
 	char*		name;
 	fint		balance;
 	time_t		createdate;
-	fintrans_t*	fintransls;
+	fintrans_t**	fintransls;
 	int		numtrans;	// Number of transactions in fintransls
 };
 
 struct	financialregister_t
 {
 	int 		num_accounts;
-	account_t*	accountlist;
+	account_t**	accountlist;
 	int		num_categories;
-	budgcat_t*	categorylist;
+	budgcat_t**	categorylist;
 	int		num_transactions;
-	fintrans_t*	transactionlist;
+	fintrans_t**	transactionlist;
 };
 
 
