@@ -61,10 +61,10 @@ struct	account_t
 
 struct	financialregister_t
 {
-	account_t*	accountlist;
 	int 		num_accounts;
-	budgcat_t*	categorylist;
+	account_t*	accountlist;
 	int		num_categories;
-	fintrans_t*	transactionlist;
+	budgcat_t*	categorylist;
 	int		num_transactions;
+	fintrans_t*	transactionlist;
 };

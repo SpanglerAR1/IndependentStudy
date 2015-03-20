@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "FinancialRegisterDataTypes.cpp"
+#include "FinancialRegisterMainMenu.cpp"
 
 int 	yorn		(const char* question);
 FILE*	findregfile	(int argc, char* argv[]);
-void	init		(financialregister_t& reg,FILE* infile);
+int	init		(financialregister_t& reg,FILE* infile);
 
 int main(int argc, char* argv[])
 {
@@ -29,7 +31,28 @@ int main(int argc, char* argv[])
 
 	// Second step: Load values from the .reg file and initialize the register object
 	financialregister_t Register;
-	init(Register,regfile);
+	if(!init(Register,regfile))
+	{
+		printf("Error reading file.\n");
+		return 1;
+	}
+
+	while(mainmenu(Register)) {};
+
+	printf("Saving and closing...\n");
+
+/*
+	int selection = 0
+	while(selection 1= 'e')
+	{
+		// Main menu:
+		printf("Please select an option:\n");
+		printf("a. Add a transaction\n");
+		printf("b. Manage accounts\n");
+		printf("c. Manage budget categories\n");
+		printf("h. View transaction history\n");
+	}
+*/
 	return 0;
 }
 
@@ -81,23 +104,38 @@ FILE*	findregfile(int argc,char* argv[])
 	return NULL;
 }
 
-void init(financialregister_t& reg,FILE* infile)
+int init(financialregister_t& reg,FILE* infile)
 {
-	int testfile = getc(infile);
-	if(testfile == EOF)
+	int nextchar = getc(infile);
+	if(nextchar == EOF)
 	{
-		printf("The file is empty\n");
-		return;
+		printf("The file is empty. Initializing a new Register.\n");
+		reg.num_accounts = 0;
+		reg.accountlist = NULL;
+		reg.num_categories = 0;
+		reg.categorylist = NULL;
+		reg.num_transactions = 0;
+		reg.transactionlist = NULL;
+		printf("Initialization complete.\n");
+		return 1;
 	}
+/*
 	fseek(infile,0,SEEK_SET);
-	reg.accountlist = NULL;
-	reg.categorylist = NULL;
+	char* nextline = NULL;
+	size_t nextlinechars = 0;
+	getline(&nextline,&nextlinechars,infile);
+	if(!memcmp(nextline,"
+
+*/
+
 	fflush(infile);
 	fclose(infile);
-	printf("Loading file...\n");
-	return;
+	printf("Initialization Complete...\n");
+	return 1;
 }
 
+
+// This function comes via the GNU C Library Manual.
 int yorn(const char* question)
 {
 	fputs(question,stdout);
