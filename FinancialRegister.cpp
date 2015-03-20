@@ -39,20 +39,6 @@ int main(int argc, char* argv[])
 
 	while(mainmenu(Register)) {};
 
-	printf("Saving and closing...\n");
-
-/*
-	int selection = 0
-	while(selection 1= 'e')
-	{
-		// Main menu:
-		printf("Please select an option:\n");
-		printf("a. Add a transaction\n");
-		printf("b. Manage accounts\n");
-		printf("c. Manage budget categories\n");
-		printf("h. View transaction history\n");
-	}
-*/
 	return 0;
 }
 

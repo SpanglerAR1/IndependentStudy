@@ -5,6 +5,9 @@
 
 #include<time.h>
 
+#ifndef	__FRDT_GUARD
+#define	__FRDT_GUARD
+
 // I'm creating a fixed-point type for account balances and transaction amounts.
 // It's simply an int, but it reminds me that fint represents cents, rather than dollars,
 // and will need to be converted before displaying to the user. fint = financial integer
@@ -68,3 +71,6 @@ struct	financialregister_t
 	int		num_transactions;
 	fintrans_t*	transactionlist;
 };
+
+
+#endif
