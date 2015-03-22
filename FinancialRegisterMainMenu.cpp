@@ -76,7 +76,7 @@ int man_accts (financialregister_t& reg)
 		printf("You do not have any accounts yet.\nA new one will be created.\n");
 		add_acct(reg);
 	}
-	
+
 	printf("You currently have %d accounts.\n",reg.num_accounts);
 	printf("Would you like to:\nd. Delete existing account\nm. Modify existing account\na. Add a new acount\nx. Go back\n");
 	printf("Selection: ");
@@ -86,7 +86,7 @@ int man_accts (financialregister_t& reg)
 
 int add_acct(financialregister_t& reg)
 {
-	printf("Creating new account...\n");	
+	printf("Creating new account...\n");
 	// Initialize or expand the account list
 	if(reg.num_accounts == 0)
 	{
@@ -99,9 +99,9 @@ int add_acct(financialregister_t& reg)
 		reg.accountlist = (account_t **)realloc(reg.accountlist,reg.num_accounts*sizeof(account_t*));
 	}
 	// create the account object itself, and point the last account list entry to it:
-	*(reg.accountlist[reg.num_accounts - 1]) = (account_t *)malloc(sizeof(account_t));
+	reg.accountlist[reg.num_accounts - 1] = (account_t *)malloc(sizeof(account_t));
 	// create a separate pointer to the new account itself, for easier dereferencing.
-	account_t* newaccount = *(reg.accountlist[reg.num_accounts - 1]);
+	account_t* newaccount = reg.accountlist[reg.num_accounts - 1];
 
 	while(1)
 	{
@@ -126,7 +126,7 @@ int add_acct(financialregister_t& reg)
 			default:
 				continue;
 		}
-		getc(stdin); // Remove the trailing newline
+		while(getc(stdin) != '\n'); // Remove the trailing newline
 		break;
 	}
 
@@ -173,8 +173,8 @@ int add_acct(financialregister_t& reg)
 	newaccount->numtrans = 0;
 	newaccount->fintransls = NULL;
 
-	printf("Your new account, %s,",*(reg.accountlist)[reg.num_accts - 1]->name);
-	printf(" with balance %d.",(*(reg.accountlist)[reg.num_accts - 1]->balance)/100);
-	printf("%d, has been created.\n",(*(reg.accountlist)[reg.num_accts - 1]->balance)%100);
+	printf("Your new account, %s,",reg.accountlist[reg.num_accounts - 1]->name);
+	printf(" with balance %d.",(reg.accountlist[reg.num_accounts - 1]->balance)/100);
+	printf("%d, has been created.\n",(reg.accountlist[reg.num_accounts - 1]->balance)%100);
 	return 1;
 }
