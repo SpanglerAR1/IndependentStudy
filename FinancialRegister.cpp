@@ -112,11 +112,11 @@ int init(financialregister_t& reg,FILE* infile)
 	getline(&nextline,&nextlinechars,infile);
 	if(!memcmp(nextline,"
 
-*/
 
 	fflush(infile);
 	fclose(infile);
 	printf("Initialization Complete...\n");
+*/
 	return 1;
 }
 

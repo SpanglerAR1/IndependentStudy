@@ -59,8 +59,8 @@ struct	account_t
 	char*		name;
 	fint		balance;
 	time_t		createdate;
-	fintrans_t**	fintransls;
 	int		numtrans;	// Number of transactions in fintransls
+	fintrans_t**	fintransls;
 };
 
 struct	financialregister_t

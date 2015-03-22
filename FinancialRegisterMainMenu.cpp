@@ -2,6 +2,7 @@
 // By Adam R. Spangler, created on 3/20/2015
 // Last updated: 3/20/2015
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -76,9 +77,9 @@ int man_accts (financialregister_t& reg)
 		// initialize the account pointer list:
 		reg.accountlist = (account_t **)malloc(sizeof(account_t*));
 		// create the first account object:
-		reg.*accountlist = (account_t *)malloc(sizeof(account_t));
+		*(reg.accountlist) = (account_t *)malloc(sizeof(account_t));
 		// create a separate pointer to the new account itself, for easier dereferencing.
-		account_t* newaccount = reg.*accountlist;
+		account_t* newaccount = *(reg.accountlist);
 
 		while(1)
 		{
@@ -103,11 +104,13 @@ int man_accts (financialregister_t& reg)
 				default:
 					continue;
 			}
+			getc(stdin);
+			break;
 		}
 
 		while(1)
 		{
-			printf("You do not have any accounts yet.\nPlease enter a name for the new account: ");
+			printf("Please enter a name for the new account: ");
 			char* accountname = NULL;
 			size_t accountnamenumchars = 0;
 			getline(&accountname,&accountnamenumchars,stdin);
@@ -118,19 +121,40 @@ int man_accts (financialregister_t& reg)
 			if(newlinesearch == accountname)
 			{
 				printf("Invalid account name.\n");
-				return 0;
+				continue;
 			}
 			newaccount->name = accountname;
+			break;
 		}
 
 		while(1)
 		{
 			printf("Please enter a starting balance for the account: ");
-			char* startingbalance = NULL;
-			size_t startingbalancenumchars = 0;
-			// left off here.
+			char* startingbalancestr = NULL;
+			size_t startingbalancestrnumchars = 0;
+			getline(&startingbalancestr,&startingbalancestrnumchars,stdin);
+			char* tailptr = NULL;
+			int startingbalanceint = strtol(startingbalancestr,&tailptr,10);
+			fint startingbalance = startingbalanceint * 100;
+			if(*tailptr == '.')
+			{
+				startingbalancestr = ++tailptr;
+				int cents = strtol(startingbalancestr,&tailptr,10);
+				while(cents >= 100) cents = cents / 10;
+				startingbalance = startingbalance + cents;
+			}
+			newaccount->balance = startingbalance;
+			break;
 		}
+
+		newaccount->createdate = time(NULL);
+		newaccount->numtrans = 0;
+		newaccount->fintransls = NULL;
+
+		printf("Your new account, %s, with balance %d.%d, has been created.\n",reg.accountlist[0]->name,(reg.accountlist[0]->balance)/100,(reg.accountlist[0]->balance)%100);
+
 	}
+	return 1;
 }
 
 int	man_categ	(financialregister_t* reg);
