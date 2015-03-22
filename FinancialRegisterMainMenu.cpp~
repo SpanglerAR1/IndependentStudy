@@ -80,7 +80,79 @@ int man_accts (financialregister_t& reg)
 	printf("You currently have %d accounts.\n",reg.num_accounts);
 	printf("Would you like to:\nd. Delete existing account\nm. Modify existing account\na. Add a new acount\nx. Go back\n");
 	printf("Selection: ");
-	// Left off here
+
+
+	while(1)
+	{
+		printf("Will the account be\nC. Checking\nS. Savings\nL. Liability\nA. Asset\nChoose one: ");
+		int response = getc(stdin);
+		if((response == '\n') || (response == EOF)) continue;
+		response = tolower(response);
+		switch(response)
+		{
+			case 'c':
+				newaccount->type = checking;
+				break;
+			case 's':
+				newaccount->type = savings;
+				break;
+			case 'l':
+				newaccount->type = liability;
+				break;
+			case 'a':
+				newaccount->type = asset;
+				break;
+			default:
+				continue;
+		}
+		getc(stdin);
+		break;
+	}
+
+	while(1)
+	{
+		printf("Please enter a name for the new account: ");
+		char* accountname = NULL;
+		size_t accountnamenumchars = 0;
+		getline(&accountname,&accountnamenumchars,stdin);
+		char* newlinesearch = accountname;
+		while(*newlinesearch != '\n') newlinesearch++;
+		*newlinesearch = '\0';
+		// If the person didn't actually provide a name, but just hit enter:
+		if(newlinesearch == accountname)
+		{
+			printf("Invalid account name.\n");
+			continue;
+		}
+		newaccount->name = accountname;
+		break;
+	}
+
+	while(1)
+	{
+		printf("Please enter a starting balance for the account: ");
+		char* startingbalancestr = NULL;
+		size_t startingbalancestrnumchars = 0;
+		getline(&startingbalancestr,&startingbalancestrnumchars,stdin);
+		char* tailptr = NULL;
+		int startingbalanceint = strtol(startingbalancestr,&tailptr,10);
+		fint startingbalance = startingbalanceint * 100;
+		if(*tailptr == '.')
+		{
+			startingbalancestr = ++tailptr;
+			int cents = strtol(startingbalancestr,&tailptr,10);
+			while(cents >= 100) cents = cents / 10;
+			startingbalance = startingbalance + cents;
+		}
+		newaccount->balance = startingbalance;
+		break;
+	}
+
+	newaccount->createdate = time(NULL);
+	newaccount->numtrans = 0;
+	newaccount->fintransls = NULL;
+
+	printf("Your new account, %s, with balance %d.%d, has been created.\n",reg.accountlist[0]->name,(reg.accountlist[0]->balance)/100,(reg.accountlist[0]->balance)%100);
 	return 1;
 }
 
