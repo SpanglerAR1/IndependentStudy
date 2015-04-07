@@ -100,9 +100,6 @@ int init(financialregister_t& reg,FILE* infile)
 		reg.numaccounts = 0;
 		reg.firstaccount = NULL;
 		reg.lastaccount = NULL;
-		reg.numcategories = 0;
-		reg.firstcategory = NULL;
-		reg.lastcategory = NULL;
 		printf("Initialization complete.\n");
 		return 1;
 	}

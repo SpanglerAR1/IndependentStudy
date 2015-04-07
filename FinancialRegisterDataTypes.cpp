@@ -17,9 +17,7 @@ enum	accounttype
 {
 	checking,
 	savings,
-	creditcard,
-	liability,
-	asset
+	creditcard
 };
 
 // fintranstype = Financial Transaction Type
@@ -29,27 +27,14 @@ enum	fintranstype
 	expense
 };
 
-struct account_t;
 struct fintrans_t;
 struct account_t;
 struct financialregister_t;
 
-// budgcat = budget category
-struct	budgcat_t
-{
-	char*		name;
-	fint		amount;
-	time_t		date;	// If date is 0, then assumed to be monthly
-};
-
-
 struct	fintrans_t
 {
 	fintranstype	type;
-	char		istransfer;
 	fint		amount;
-	time_t		date;
-	budgcat_t	category;
 	char*		description;
 	char*		outsideparty;	// Ignored if transfer
 	fintrans_t*	previousfintrans;
@@ -61,7 +46,6 @@ struct	account_t
 	accounttype 	type;
 	char*		name;
 	fint		balance;
-	time_t		createdate;
 	int		numfintrans;
 	fintrans_t*	firstfintrans;
 	fintrans_t*	lastfintrans;
@@ -74,9 +58,6 @@ struct	financialregister_t
 	int		numaccounts;
 	account_t*	firstaccount;
 	account_t*	lastaccount;
-	int		numcategories;
-	budgcat_t*	firstcategory;
-	budgcat_t*	lastcategory;
 };
 
 #endif

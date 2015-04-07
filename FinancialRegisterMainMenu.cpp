@@ -132,7 +132,7 @@ void add_acct(financialregister_t& reg)
 
 	while(1)
 	{
-		printf("Will the account be\nC. Checking\nS. Savings\nL. Liability\nA. Asset\nChoose one: ");
+		printf("Will the account be\nC. Checking\nS. Savings\nA.Credit Card\n\nChoose one: ");
 		int response = getc(stdin);
 		if((response == '\n') || (response == EOF)) continue;
 		response = tolower(response);
@@ -144,11 +144,8 @@ void add_acct(financialregister_t& reg)
 			case 's':
 				newaccount->type = savings;
 				break;
-			case 'l':
-				newaccount->type = liability;
-				break;
 			case 'a':
-				newaccount->type = asset;
+				newaccount->type = creditcard;
 				break;
 			default:
 				continue;
@@ -196,7 +193,6 @@ void add_acct(financialregister_t& reg)
 		break;
 	}
 
-	newaccount->createdate = time(NULL);
 	newaccount->numfintrans = 0;
 	newaccount->firstfintrans = NULL;
 	newaccount->lastfintrans = NULL;
