@@ -26,9 +26,13 @@ enum	accounttype
 enum	fintranstype
 {
 	income,
-	expense,
-	transfer
+	expense
 };
+
+struct account_t;
+struct fintrans_t;
+struct account_t;
+struct financialregister_t;
 
 // budgcat = budget category
 struct	budgcat_t
@@ -38,19 +42,18 @@ struct	budgcat_t
 	time_t		date;	// If date is 0, then assumed to be monthly
 };
 
-// Declaration, so that I can reference account_t in fintrans_t
-struct account_t;
 
 struct	fintrans_t
 {
 	fintranstype	type;
-	account_t*	account;
-	account_t*	to_account;	// Ignored unless type == transfer
+	char		istransfer;	
 	fint		amount;
 	time_t		date;
 	budgcat_t	category;
 	char*		description;
 	char*		outsideparty;	// Ignored if transfer
+	fintrans_t*	firstfintrans;
+	fintrans_t*	lastfintrans;
 };
 
 struct	account_t
@@ -59,19 +62,21 @@ struct	account_t
 	char*		name;
 	fint		balance;
 	time_t		createdate;
-	int		numtrans;	// Number of transactions in fintransls
-	fintrans_t**	fintransls;
+	int		numfintrans;	
+	fintrans_t*	firstfintrans;
+	fintrans_t*	lastfintrans;
+	account_t*	previousaccount;
+	account_t*	nextaccount;
 };
 
 struct	financialregister_t
 {
-	int 		num_accounts;
-	account_t**	accountlist;
-	int		num_categories;
-	budgcat_t**	categorylist;
-	int		num_transactions;
-	fintrans_t**	transactionlist;
+	int		numaccounts;	
+	account_t*	firstaccount;
+	account_t*	lastaccount;
+	int		numcategories;
+	budgcat_t*	firstcategory;
+	budgcat_t*	lastcategory;
 };
-
 
 #endif

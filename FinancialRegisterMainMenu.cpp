@@ -90,12 +90,16 @@ int add_acct(financialregister_t& reg)
 	// Initialize or expand the account list
 	if(reg.num_accounts == 0)
 	{
+		reg.num_accounts++;
 		// initialize the account pointer list:
-		reg.accountlist = (account_t **)malloc(sizeof(account_t*));
+		reg.firstaccount = (account_t *)malloc(sizeof(account_t));
+		reg.lastaccount = reg.firstaccount;
 	}
 	else
 	{
 		reg.num_accounts++;
+		account_t* nextaccount = reg.firstaccount->nextaccount;
+		while(		
 		reg.accountlist = (account_t **)realloc(reg.accountlist,reg.num_accounts*sizeof(account_t*));
 	}
 	// create the account object itself, and point the last account list entry to it:

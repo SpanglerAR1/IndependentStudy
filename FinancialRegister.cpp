@@ -96,12 +96,12 @@ int init(financialregister_t& reg,FILE* infile)
 	if(nextchar == EOF)
 	{
 		printf("The file is empty. Initializing a new Register.\n");
-		reg.num_accounts = 0;
-		reg.accountlist = NULL;
-		reg.num_categories = 0;
-		reg.categorylist = NULL;
-		reg.num_transactions = 0;
-		reg.transactionlist = NULL;
+		reg.numaccounts = 0;
+		reg.firstaccount = NULL;
+		reg.lastaccount = NULL;
+		reg.numcategories = 0;
+		reg.firstcategory = NULL;
+		reg.lastcategory = NULL;
 		printf("Initialization complete.\n");
 		return 1;
 	}
