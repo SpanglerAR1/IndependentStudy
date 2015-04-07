@@ -46,14 +46,14 @@ struct	budgcat_t
 struct	fintrans_t
 {
 	fintranstype	type;
-	char		istransfer;	
+	char		istransfer;
 	fint		amount;
 	time_t		date;
 	budgcat_t	category;
 	char*		description;
 	char*		outsideparty;	// Ignored if transfer
-	fintrans_t*	firstfintrans;
-	fintrans_t*	lastfintrans;
+	fintrans_t*	previousfintrans;
+	fintrans_t*	nextfintrans;
 };
 
 struct	account_t
@@ -62,7 +62,7 @@ struct	account_t
 	char*		name;
 	fint		balance;
 	time_t		createdate;
-	int		numfintrans;	
+	int		numfintrans;
 	fintrans_t*	firstfintrans;
 	fintrans_t*	lastfintrans;
 	account_t*	previousaccount;
@@ -71,7 +71,7 @@ struct	account_t
 
 struct	financialregister_t
 {
-	int		numaccounts;	
+	int		numaccounts;
 	account_t*	firstaccount;
 	account_t*	lastaccount;
 	int		numcategories;

@@ -14,6 +14,7 @@
 int 	yorn		(const char* question);
 FILE*	findregfile	(int argc, char* argv[]);
 int	init		(financialregister_t& reg,FILE* infile);
+void	savefile	(financialregister_t& reg,FILE* outfile);
 
 int main(int argc, char* argv[])
 {
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
 	}
 
 	while(mainmenu(Register)) {};
-
+	savefile(Register,regfile);
 	return 0;
 }
 
@@ -142,4 +143,52 @@ int yorn(const char* question)
 		/* Answer was invalid: ask for valid answer. */
 		fputs ("Please answer y or n:", stdout);
 	}
+}
+
+void savefile(financialregister_t& reg, FILE* outfile)
+{
+	printf("Saving...\n");
+	fseek(outfile,0,SEEK_SET);
+	if(fputs("Accounts:\n",outfile) == EOF) return;
+	account_t* currentaccount = reg.firstaccount;
+	if(currentaccount == NULL) fprintf(outfile,"<none>\nEnd Accounts\n");
+	else
+	{
+		while(currentaccount != NULL)
+		{
+			fprintf(outfile,"Account Name:%s\n",currentaccount->name);
+
+			fprintf(outfile,"Account Type:");
+			switch(currentaccount->type)
+			{
+				case checking:
+					fprintf(outfile,"Checking\n");
+					break;
+				case savings:
+					fprintf(outfile,"Savings\n");
+					break;
+				case creditcard:
+					fprintf(outfile,"CreditCard\n");
+			}
+
+			fprintf(outfile,"Balance (cents):%d\n",currentaccount->balance);
+
+			fprintf(outfile,"Begin Transactions:\n");
+			fintrans_t* currentfintrans = currentaccount->firstfintrans;
+			if(currentfintrans == NULL) fprintf(outfile,"<none>\nEnd Transactions\n");
+			else
+			{
+				while(currentfintrans != NULL)
+				{
+					fprintf(outfile,"%d:%d:%s:%s\n",currentfintrans->type,currentfintrans->amount,currentfintrans->description,currentfintrans->outsideparty);
+					currentfintrans = currentfintrans->nextfintrans;
+				}
+				fprintf(outfile,"End Transactions\n");
+			}
+
+			currentaccount = currentaccount->nextaccount;
+		}
+	}
+	fprintf(outfile,"End Accounts\n");
+	return;
 }

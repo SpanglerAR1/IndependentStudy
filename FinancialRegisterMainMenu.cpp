@@ -26,7 +26,6 @@ int mainmenu(financialregister_t& reg)
 	printf("h. View transaction history\n");
 	printf("t. Manage transactions\n");
 	printf("s. Save and quit\n");
-	printf("x. Exit w/o saving\n");
 	printf("Selection: ");
 	int c = getc(stdin);
 	int selection = tolower(c);
@@ -53,10 +52,6 @@ int mainmenu(financialregister_t& reg)
 			printf("You want to manage transactions\n");
 			break;
 		case 's':
-			printf("You want to save and quit\n");
-			printf("Saving...");
-		case 'x':
-			printf("Quitting...\n");
 			return 0;
 		default:
 			return 1;
