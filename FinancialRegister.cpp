@@ -1,7 +1,7 @@
 // FinancialRegister.cpp
 // By Adam R. Spangler, created on 3/18/2015
 #define	__FR_VERSION_ID	"0.0.1"
-// Last updated: 3/25/2015
+// Last updated: 4/7/2015
 
 #include <stdlib.h>
 #include <stdio.h>

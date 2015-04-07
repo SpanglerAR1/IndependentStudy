@@ -8,12 +8,14 @@
 
 #include "FinancialRegisterDataTypes.cpp"
 
-int	add_trans	(financialregister_t& reg);
-int	man_accts	(financialregister_t& reg);
-  int	   add_acct	(financialregister_t& reg);
-int	man_categ	(financialregister_t& reg);
-int	view_trans	(financialregister_t& reg);
-int	man_trans	(financialregister_t& reg);
+void	add_trans	(financialregister_t& reg);
+void	man_accts	(financialregister_t& reg);
+	void	add_acct	(financialregister_t& reg);
+	void	del_acct	(financialregister_t& reg);
+	void	mod_acct	(financialregister_t& reg);
+void	man_categ	(financialregister_t& reg);
+void	view_trans	(financialregister_t& reg);
+void	man_trans	(financialregister_t& reg);
 
 int mainmenu(financialregister_t& reg)
 {
@@ -27,7 +29,7 @@ int mainmenu(financialregister_t& reg)
 	printf("x. Exit w/o saving\n");
 	printf("Selection: ");
 	int c = getc(stdin);
-	int selection = c;
+	int selection = tolower(c);
 	// discard extra input and the newline
 	while((c != '\n') && (c != EOF)) c = getc(stdin);
 	switch(selection)
@@ -62,50 +64,76 @@ int mainmenu(financialregister_t& reg)
 	return 1;
 }
 
-int add_trans (financialregister_t& reg)
+void add_trans (financialregister_t& reg)
 {
 	printf("You want to add a transaction\n");
-	return 1;
+	return;
 }
 
 
-int man_accts (financialregister_t& reg)
+void man_accts (financialregister_t& reg)
 {
-	if(reg.num_accounts == 0)
+	if(reg.numaccounts == 0)
 	{
 		printf("You do not have any accounts yet.\nA new one will be created.\n");
 		add_acct(reg);
 	}
 
-	printf("You currently have %d accounts.\n",reg.num_accounts);
-	printf("Would you like to:\nd. Delete existing account\nm. Modify existing account\na. Add a new acount\nx. Go back\n");
-	printf("Selection: ");
-	// Left off here
-	return 1;
+	printf("You currently have %d accounts\n",reg.numaccounts);
+	int accountcounter = 1;
+	account_t* currentaccount = reg.firstaccount;
+	while(currentaccount != NULL)
+	{
+		printf("%d: %s\n",accountcounter++,currentaccount->name);
+		currentaccount = currentaccount->nextaccount;
+	}
+
+	while(1)
+	{
+		printf("Would you like to:\nd. Delete existing account\nm. Modify existing account\na. Add a new acount\nx. Go back\n");
+		printf("Selection: ");
+		int c = getc(stdin);
+		int selection = tolower(c);
+		while((c != '\n') && (c != EOF)) c = getc(stdin);
+		switch(selection)
+		{
+			case EOF:
+			case '\n':
+				continue;
+			case 'd':
+				del_acct(reg);
+				break;
+			case 'm':
+				mod_acct(reg);
+				break;
+			case 'a':
+				add_acct(reg);
+				break;
+			case 'x':
+				return;
+		}
+	}
 }
 
-int add_acct(financialregister_t& reg)
+void add_acct(financialregister_t& reg)
 {
 	printf("Creating new account...\n");
-	// Initialize or expand the account list
-	if(reg.num_accounts == 0)
+	account_t* newaccount = (account_t*)malloc(sizeof(account_t));
+	if(reg.numaccounts == 0)
 	{
-		reg.num_accounts++;
-		// initialize the account pointer list:
-		reg.firstaccount = (account_t *)malloc(sizeof(account_t));
-		reg.lastaccount = reg.firstaccount;
+		reg.firstaccount = newaccount;
+		reg.lastaccount = newaccount;
+		newaccount->previousaccount = NULL;
+		newaccount->nextaccount = NULL;
 	}
 	else
 	{
-		reg.num_accounts++;
-		account_t* nextaccount = reg.firstaccount->nextaccount;
-		while(		
-		reg.accountlist = (account_t **)realloc(reg.accountlist,reg.num_accounts*sizeof(account_t*));
+		reg.lastaccount->nextaccount = newaccount;
+		newaccount->previousaccount = reg.lastaccount;
+		reg.lastaccount = newaccount;
+		newaccount->nextaccount = NULL;
 	}
-	// create the account object itself, and point the last account list entry to it:
-	reg.accountlist[reg.num_accounts - 1] = (account_t *)malloc(sizeof(account_t));
-	// create a separate pointer to the new account itself, for easier dereferencing.
-	account_t* newaccount = reg.accountlist[reg.num_accounts - 1];
+	reg.numaccounts++;
 
 	while(1)
 	{
@@ -174,11 +202,31 @@ int add_acct(financialregister_t& reg)
 	}
 
 	newaccount->createdate = time(NULL);
-	newaccount->numtrans = 0;
-	newaccount->fintransls = NULL;
+	newaccount->numfintrans = 0;
+	newaccount->firstfintrans = NULL;
+	newaccount->lastfintrans = NULL;
 
-	printf("Your new account, %s,",reg.accountlist[reg.num_accounts - 1]->name);
-	printf(" with balance %d.",(reg.accountlist[reg.num_accounts - 1]->balance)/100);
-	printf("%d, has been created.\n",(reg.accountlist[reg.num_accounts - 1]->balance)%100);
-	return 1;
+	printf("Your new account, %s,",reg.lastaccount->name);
+	printf(" with balance %d.",(reg.lastaccount->balance)/100);
+	printf("%d, has been created.\n",(reg.lastaccount->balance)%100);
+	return;
+}
+
+void del_acct(financialregister_t& reg)
+{
+	printf("You currently have %d accounts\n",reg.numaccounts);
+	int accountcounter = 1;
+	account_t* currentaccount = reg.firstaccount;
+	while(currentaccount != NULL)
+	{
+		printf("%d: %s\n",accountcounter++,currentaccount->name);
+		currentaccount = currentaccount->nextaccount;
+	}
+	printf("In del_acct()\n");
+	return;
+}
+
+void mod_acct(financialregister_t& reg)
+{
+	printf("In mod_acct\n");
 }
