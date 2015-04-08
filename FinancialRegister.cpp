@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
 	// Second step: Load values from the .reg file and initialize the register object
 	financialregister_t Register;
-	if(!init(Register,regfile))
+	if(init(Register,regfile))
 	{
 		printf("Error reading file.\n");
 		return 1;
@@ -101,46 +101,44 @@ int init(financialregister_t& reg,FILE* infile)
 		reg.firstaccount = NULL;
 		reg.lastaccount = NULL;
 		printf("Initialization complete.\n");
-		return 1;
+		return 0;
 	}
-/*
+
 	fseek(infile,0,SEEK_SET);
 	char* nextline = NULL;
 	size_t nextlinechars = 0;
 	getline(&nextline,&nextlinechars,infile);
-	if(!memcmp(nextline,"
-
+	if(memcmp(nextline,"Accounts:\n")) return 1;
+	getline(&nextline,&nextlinechars,infile);
+	if(memcmp(nextline,"<none>\n"))
+	{
+		reg.numaccounts = 0;
+		reg.firstaccount = NULL;
+		reg.lastaccount = NULL;
+	}
+	else
+	{
+		while(!memcmp(nextline,"End Accounts\n"))
+		{
+			char* nextchar = nextline;
+			while(*(++nextchar) != ':') if((*nextchar == '\n') || (*nextchar == EOF)) return 1;
+			nextchar++;
+			// Nextchar is now positioned on the first character of the name of the account
+			if(reg.firstaccount == NULL)
+			{
+				account_t* newaccount = (account_t*)malloc(sizeof(account_t));
+				reg.firstaccount = newaccount;
+				reg.firstaccount
+			}
+	}
 
 	fflush(infile);
 	fclose(infile);
 	printf("Initialization Complete...\n");
-*/
-	return 1;
+	return 0;
 }
 
 
-// This function comes via the GNU C Library Manual.
-int yorn(const char* question)
-{
-	fputs(question,stdout);
-	while (1)
-	{
-		int c, answer;
-		/* Write a space to separate answer from question. */
-		fputc(' ', stdout);
-		/* Read the first character of the line.
-		This should be the answer character, but might not be. */
-		c = tolower(getc(stdin));
-		answer = c;
-		/* Discard rest of input line. */
-		while((c != '\n') && (c != EOF)) c = getc (stdin);
-		/* Obey the answer if it was valid. */
-		if(answer == 'y') return 1;
-		if(answer == 'n') return 0;
-		/* Answer was invalid: ask for valid answer. */
-		fputs ("Please answer y or n:", stdout);
-	}
-}
 
 void savefile(financialregister_t& reg, FILE* outfile)
 {
@@ -186,6 +184,32 @@ void savefile(financialregister_t& reg, FILE* outfile)
 			currentaccount = currentaccount->nextaccount;
 		}
 	}
-	fprintf(outfile,"End Accounts\n");
+	fprintf(outfile,"End Accounts");
+	fputc(outfile,EOF);
+	fflush(outfile);
+	fclose(outfile);
 	return;
+}
+
+// This function comes via the GNU C Library Manual.
+int yorn(const char* question)
+{
+	fputs(question,stdout);
+	while (1)
+	{
+		int c, answer;
+		/* Write a space to separate answer from question. */
+		fputc(' ', stdout);
+		/* Read the first character of the line.
+		This should be the answer character, but might not be. */
+		c = tolower(getc(stdin));
+		answer = c;
+		/* Discard rest of input line. */
+		while((c != '\n') && (c != EOF)) c = getc (stdin);
+		/* Obey the answer if it was valid. */
+		if(answer == 'y') return 1;
+		if(answer == 'n') return 0;
+		/* Answer was invalid: ask for valid answer. */
+		fputs ("Please answer y or n:", stdout);
+	}
 }
