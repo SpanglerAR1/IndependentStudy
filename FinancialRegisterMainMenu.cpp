@@ -87,6 +87,8 @@ void add_trans (financialregister_t& reg)
 	}
 
 	fintrans_t* newfintrans = (fintrans_t*)malloc(sizeof(fintrans_t));
+	newfintrans->previousfintrans = NULL;
+	newfintrans->nextfintrans = NULL;	
 	account_t* fintransaccount = reg.firstaccount;
 
 	while(1)
