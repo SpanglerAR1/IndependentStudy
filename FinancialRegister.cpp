@@ -12,7 +12,6 @@
 #include "FinancialRegisterMainMenu.cpp"
 
 int 	yorn		(const char* question);
-FILE*	findregfile	(int argc, char* argv[]);
 int	init		(financialregister_t& reg,FILE* infile);
 void	savefile	(financialregister_t& reg,FILE* outfile);
 
@@ -27,30 +26,8 @@ int main(int argc, char* argv[])
 	// Save to the .reg file on closing
 
 	// First step: Locate the .reg file
-	FILE* regfile = findregfile(argc,argv);
-	if(regfile == NULL) return 0;
-
-	// Second step: Load values from the .reg file and initialize the register object
-	financialregister_t Register;
-	if(init(Register,regfile))
-	{
-		printf("Error reading file.\n");
-		return 1;
-	}
-
-	system("clear");
-	list_accts(Register);
-	while(mainmenu(Register))
-	{
-		system("clear");
-		list_accts(Register);
-	}
-	savefile(Register,regfile);
-	return 0;
-}
-
-FILE*	findregfile(int argc,char* argv[])
-{
+	char* filename = NULL;
+	FILE* regfile = NULL;
 	if(argc == 1)
 	{
 		printf("You did not specify a .reg file.\n");
@@ -59,50 +36,74 @@ FILE*	findregfile(int argc,char* argv[])
 			while(1)
 			{
 				printf("Please enter a name for the new file: \n");
-				char* filename = NULL;
 				size_t filenamenumchars = 0;
 				getline(&filename,&filenamenumchars,stdin);
 				// Because getline doesn't have the good sense to remove the newline character
 				char* newlinesearch = filename;
 				while(*newlinesearch != '\n') newlinesearch++;
 				*newlinesearch = '\0';
-				FILE* newregfile = fopen(filename,"wx");
-				if(newregfile == NULL)
+				regfile = fopen(filename,"wx");
+				if(regfile == NULL)
 				{
 					printf("File already exists.\n");
 					continue;
 				}
 				printf("File %s opened successfully.\n",filename);
-				return newregfile;
 			}
 		}
 		else
 		{
 			printf("Financial Register must be run with a .reg file.\n");
-			return NULL;
 		}
 	}
 	else if(argc == 2)
 	{
-		FILE* newregfile = fopen(argv[1],"r+");
-		if(newregfile == NULL)
+		regfile = fopen(argv[1],"r");
+		if(regfile == NULL)
 		{
 			printf("Failed to open file %s.\n",argv[1]);
-			return NULL;
+			return 1;
 		}
 		printf("File %s opened successfully.\n",argv[1]);
-		return newregfile;
+		filename = strdup(argv[1]);
 	}
-	else printf("You may only specify one .reg file.\n");
-	return NULL;
+	else
+	{
+		printf("You may only specify one .reg file.\n");
+		return 1;
+	}
+
+	printf("The filename is %s\n",filename);
+
+	// Second step: Load values from the .reg file and initialize the register object
+	financialregister_t Register;
+	Register.numaccounts = 0;
+	Register.firstaccount = NULL;
+	Register.lastaccount = NULL;
+
+	if(init(Register,regfile))
+	{
+		printf("Error reading file.\n");
+		return 1;
+	}
+
+	//system("clear");
+	list_accts(Register);
+	while(mainmenu(Register))
+	{
+		//system("clear");
+		list_accts(Register);
+	}
+	fclose(regfile);
+	printf("File Closed\n");
+	regfile = fopen(filename,"w");
+	printf("File %s reopened for writing\n",filename);
+	savefile(Register,regfile);
+	return 0;
 }
 
 int init(financialregister_t& reg,FILE* infile)
 {
-	reg.numaccounts = 0;
-	reg.firstaccount = NULL;
-	reg.lastaccount = NULL;
-
 	int nextchar = getc(infile);
 	if(nextchar == EOF)
 	{
