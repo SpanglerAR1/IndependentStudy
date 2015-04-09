@@ -8,6 +8,7 @@
 
 #include "FinancialRegisterDataTypes.cpp"
 
+void	list_accts	(const financialregister_t reg);
 void	add_trans	(financialregister_t& reg);
 void	man_accts	(financialregister_t& reg);
 	void	add_acct	(financialregister_t& reg);
@@ -59,6 +60,18 @@ int mainmenu(financialregister_t& reg)
 	return 1;
 }
 
+void list_accts(const financialregister_t reg)
+{
+	printf("You currently have %d accounts\n",reg.numaccounts);
+	int accountcounter = 1;
+	account_t* currentaccount = reg.firstaccount;
+	while(currentaccount != NULL)
+	{
+		printf("%d: %s\n",accountcounter++,currentaccount->name);
+		currentaccount = currentaccount->nextaccount;
+	}
+}
+
 void add_trans (financialregister_t& reg)
 {
 	printf("You want to add a transaction\n");
@@ -68,23 +81,16 @@ void add_trans (financialregister_t& reg)
 
 void man_accts (financialregister_t& reg)
 {
-	if(reg.numaccounts == 0)
-	{
-		printf("You do not have any accounts yet.\nA new one will be created.\n");
-		add_acct(reg);
-	}
-
-	printf("You currently have %d accounts\n",reg.numaccounts);
-	int accountcounter = 1;
-	account_t* currentaccount = reg.firstaccount;
-	while(currentaccount != NULL)
-	{
-		printf("%d: %s\n",accountcounter++,currentaccount->name);
-		currentaccount = currentaccount->nextaccount;
-	}
-
 	while(1)
 	{
+		list_accts(reg);
+
+		if(reg.numaccounts == 0)
+		{
+			printf("You do not have any accounts yet.\nA new one will be created.\n");
+			add_acct(reg);
+		}
+
 		printf("Would you like to:\nd. Delete existing account\nm. Modify existing account\na. Add a new acount\nx. Go back\n");
 		printf("Selection: ");
 		int c = getc(stdin);
@@ -205,14 +211,6 @@ void add_acct(financialregister_t& reg)
 
 void del_acct(financialregister_t& reg)
 {
-	printf("You currently have %d accounts\n",reg.numaccounts);
-	int accountcounter = 1;
-	account_t* currentaccount = reg.firstaccount;
-	while(currentaccount != NULL)
-	{
-		printf("%d: %s\n",accountcounter++,currentaccount->name);
-		currentaccount = currentaccount->nextaccount;
-	}
 	printf("In del_acct()\n");
 	return;
 }
@@ -220,4 +218,5 @@ void del_acct(financialregister_t& reg)
 void mod_acct(financialregister_t& reg)
 {
 	printf("In mod_acct\n");
+	return;
 }

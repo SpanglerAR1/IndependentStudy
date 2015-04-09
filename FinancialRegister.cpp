@@ -93,14 +93,14 @@ FILE*	findregfile(int argc,char* argv[])
 
 int init(financialregister_t& reg,FILE* infile)
 {
+	reg.numaccounts = 0;
+	reg.firstaccount = NULL;
+	reg.lastaccount = NULL;
+
 	int nextchar = getc(infile);
 	if(nextchar == EOF)
 	{
-		printf("The file is empty. Initializing a new Register.\n");
-		reg.numaccounts = 0;
-		reg.firstaccount = NULL;
-		reg.lastaccount = NULL;
-		printf("Initialization complete.\n");
+		printf("The file is empty.\n");
 		return 0;
 	}
 
@@ -108,13 +108,13 @@ int init(financialregister_t& reg,FILE* infile)
 	char* nextline = NULL;
 	size_t nextlinechars = 0;
 	getline(&nextline,&nextlinechars,infile);
+	//printf("Read line: %s\n",nextline);
 	if(strcmp(nextline,"Accounts:\n")) return 1;
 	getline(&nextline,&nextlinechars,infile);
-	if(strcmp(nextline,"<none>\n"))
+	//printf("Read line: %s\n",nextline);
+	if(!strcmp(nextline,"End Accounts\n"))
 	{
-		reg.numaccounts = 0;
-		reg.firstaccount = NULL;
-		reg.lastaccount = NULL;
+		printf("According to the file, there are no accounts.\n");
 	}
 	else
 	{
@@ -134,6 +134,7 @@ int init(financialregister_t& reg,FILE* infile)
 				reg.lastaccount = newaccount;
 				newaccount->previousaccount = NULL;
 				newaccount->nextaccount = NULL;
+				reg.numaccounts++;
 			}
 			else
 			{
@@ -141,22 +142,27 @@ int init(financialregister_t& reg,FILE* infile)
 				newaccount->previousaccount = reg.lastaccount;
 				reg.lastaccount = newaccount;
 				newaccount->nextaccount = NULL;
+				reg.numaccounts++;
 			}
-			newaccount->name = (char*)malloc(++strlen(nextchar))
-			strcpy(newaccount->name,nextchar);
+			newaccount->name = strdup(nextchar);
+			//printf("New Account name, as read by program: %s\n",newaccount->name);
 
 			getline(&nextline,&nextlinechars,infile);
+			//printf("Next line read: %s\n",nextline);
 			newlinesearch = nextline;
 			while(*newlinesearch != '\n') newlinesearch++;
 			*newlinesearch = '\0';
 			nextchar = nextline;
 			while(*(++nextchar) != ':') if((*nextchar == '\n') || (*nextchar == EOF)) return 1;
 			nextchar++;
+			//printf("Account type string: %s\n",nextchar);
 			// nextchar is now positioned on the first character of the account type
-			if(!strcmp(nextchar,"Checking") newaccount->type = Checking;
-			else if(!strcmp(nextchar,"Savings") newaccount->type = Savings;
-			else if(!strcmp(nextchar,"CreditCard") newaccount->type = CreditCard;
+			if(!strcmp(nextchar,"Checking")) newaccount->type = checking;
+			else if(!strcmp(nextchar,"Savings")) newaccount->type = savings;
+			else if(!strcmp(nextchar,"CreditCard")) newaccount->type = creditcard;
 			else return 1;
+
+			//printf("The new account's type is %d\n",newaccount->type);
 
 			getline(&nextline,&nextlinechars,infile);
 			newlinesearch = nextline;
@@ -166,20 +172,51 @@ int init(financialregister_t& reg,FILE* infile)
 			while(*(++nextchar) != ':') if((*nextchar == '\n') || (*nextchar == EOF)) return 1;
 			nextchar++;
 			// nextchar is now positioned on the first character of the account balance
-			newaccount->balance = strtol(nextchar);
+			newaccount->balance = strtol(nextchar,NULL,10);
+			//printf("The new account's balance is %d\n",newaccount->balance);
 
 			getline(&nextline,&nextlinechars,infile);
-			if(strcmp(nextline,"Begin Transactions:\n") return 1;
+			if(strcmp(nextline,"Begin Transactions:\n")) return 1;
 			getline(&nextline,&nextlinechars,infile);
-			if(!strcmp(nextline,"End Transactions\n")
+			//printf("Next line read: %s\n",nextline);
+			newaccount->numfintrans = 0;
+			if(!strcmp(nextline,"End Transactions\n"))
 			{
 				newaccount->firstfintrans = NULL;
 				newaccount->lastfintrans = NULL;
 			}
 			else
 			{
-				//left off here
-			}
+				while(strcmp(nextline,"End Transactions\n"))
+				{
+					fintrans_t* newfintrans = (fintrans_t*)malloc(sizeof(fintrans_t));
+					if(newaccount->firstfintrans = NULL)
+					{
+						newaccount->firstfintrans = newfintrans;
+						newaccount->lastfintrans = newfintrans;
+						newfintrans->previousfintrans = NULL;
+						newfintrans->nextfintrans = NULL;
+					}
+					else
+					{
+						newaccount->lastfintrans->nextfintrans = newfintrans;
+						newfintrans->previousfintrans = newaccount->lastfintrans;
+						newfintrans->nextfintrans = NULL;
+						newaccount->lastfintrans = newfintrans;
+					}
+					newaccount->numfintrans++;
+					int newfintranstype = strtol(strtok(nextline,":\n"),NULL,10);
+					if(newfintranstype) newfintrans->type = income;
+					else newfintrans->type = expense;
+					newfintrans->amount = strtol(strtok(NULL,":\n"),NULL,10);
+					newfintrans->description = strdup(strtok(NULL,":\n"));
+					newfintrans->outsideparty = strdup(strtok(NULL,":\n"));
+
+					getline(&nextline,&nextlinechars,infile);
+				}//while(strcmp(nextline,"End Transactions\n");
+			}// if(strcmp(nextline,"End Transactions\n");
+			getline(&nextline,&nextlinechars,infile);
+			//printf("Last account line read: %s\n",nextline);
 		}
 	}
 
@@ -197,46 +234,43 @@ void savefile(financialregister_t& reg, FILE* outfile)
 	fseek(outfile,0,SEEK_SET);
 	if(fputs("Accounts:\n",outfile) == EOF) return;
 	account_t* currentaccount = reg.firstaccount;
-	if(currentaccount == NULL) fprintf(outfile,"End Accounts\n");
-	else
+	while(currentaccount != NULL)
 	{
-		while(currentaccount != NULL)
+		fprintf(outfile,"Account Name:%s\n",currentaccount->name);
+
+		fprintf(outfile,"Account Type:");
+		switch(currentaccount->type)
 		{
-			fprintf(outfile,"Account Name:%s\n",currentaccount->name);
-
-			fprintf(outfile,"Account Type:");
-			switch(currentaccount->type)
-			{
-				case checking:
-					fprintf(outfile,"Checking\n");
-					break;
-				case savings:
-					fprintf(outfile,"Savings\n");
-					break;
-				case creditcard:
-					fprintf(outfile,"CreditCard\n");
-			}
-
-			fprintf(outfile,"Balance (cents):%d\n",currentaccount->balance);
-
-			fprintf(outfile,"Begin Transactions:\n");
-			fintrans_t* currentfintrans = currentaccount->firstfintrans;
-			if(currentfintrans == NULL) fprintf(outfile,"End Transactions\n");
-			else
-			{
-				while(currentfintrans != NULL)
-				{
-					fprintf(outfile,"%d:%d:%s:%s\n",currentfintrans->type,currentfintrans->amount,currentfintrans->description,currentfintrans->outsideparty);
-					currentfintrans = currentfintrans->nextfintrans;
-				}
-				fprintf(outfile,"End Transactions\n");
-			}
-
-			currentaccount = currentaccount->nextaccount;
+			case checking:
+				fprintf(outfile,"Checking\n");
+				break;
+			case savings:
+				fprintf(outfile,"Savings\n");
+				break;
+			case creditcard:
+				fprintf(outfile,"CreditCard\n");
 		}
+
+		fprintf(outfile,"Balance (cents):%d\n",currentaccount->balance);
+
+		fprintf(outfile,"Begin Transactions:\n");
+		fintrans_t* currentfintrans = currentaccount->firstfintrans;
+		if(currentfintrans == NULL) fprintf(outfile,"End Transactions\n");
+		else
+		{
+			while(currentfintrans != NULL)
+			{
+				fprintf(outfile,"%d:%d:%s:%s\n",currentfintrans->type,currentfintrans->amount,currentfintrans->description,currentfintrans->outsideparty);
+				currentfintrans = currentfintrans->nextfintrans;
+			}
+			fprintf(outfile,"End Transactions\n");
+		}
+
+		currentaccount = currentaccount->nextaccount;
 	}
-	fprintf(outfile,"End Accounts");
-	fputc(outfile,EOF);
+
+	fprintf(outfile,"End Accounts\n");
+	fputc(EOF,outfile);
 	fflush(outfile);
 	fclose(outfile);
 	return;
