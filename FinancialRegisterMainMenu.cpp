@@ -67,14 +67,124 @@ void list_accts(const financialregister_t reg)
 	account_t* currentaccount = reg.firstaccount;
 	while(currentaccount != NULL)
 	{
-		printf("%d: %s\n",accountcounter++,currentaccount->name);
+		printf("%d: %s - $%d",accountcounter++,currentaccount->name,(currentaccount->balance)/100);
+		printf(".%02d\n",(currentaccount->balance)%100);
 		currentaccount = currentaccount->nextaccount;
 	}
 }
 
 void add_trans (financialregister_t& reg)
 {
-	printf("You want to add a transaction\n");
+	char* response = NULL;
+	size_t responsenumchars = 0;
+
+	if(reg.numaccounts <= 0)
+	{
+		printf("No accounts. Please add an account before entering transactions.\n");
+		printf("Press enter to continue");
+		while(getc(stdin) != '\n');
+		return;
+	}
+
+	fintrans_t* newfintrans = (fintrans_t*)malloc(sizeof(fintrans_t));
+	account_t* fintransaccount = reg.firstaccount;
+
+	while(1)
+	{
+		printf("Which account will this transaction apply to (#)? ");
+		getline(&response,&responsenumchars,stdin);
+		int accountnum = strtol(response,NULL,10);
+		if(accountnum <= 0) continue;
+		accountnum--;
+		while((accountnum > 0) && (fintransaccount != NULL))
+		{
+			fintransaccount = fintransaccount->nextaccount;
+			accountnum--;
+		}
+		if(fintransaccount == NULL) continue;
+		break;
+	}
+
+	if(fintransaccount->numfintrans <= 0)
+	{
+		fintransaccount->numfintrans = 1;
+		fintransaccount->firstfintrans = newfintrans;
+		fintransaccount->lastfintrans = newfintrans;
+		newfintrans->previousfintrans = NULL;
+		newfintrans->nextfintrans = NULL;
+	}
+	else
+	{
+		fintransaccount->numfintrans++;
+		fintransaccount->lastfintrans->nextfintrans = newfintrans;
+		newfintrans->previousfintrans = fintransaccount->lastfintrans;
+		fintransaccount->lastfintrans = newfintrans;
+		newfintrans->nextfintrans = NULL;
+	}
+
+	while(1)
+	{
+		printf("Please select income or expense (i/e): ");
+		int c = getc(stdin);
+		if((c == '\n') || (c == EOF)) continue;
+		c = tolower(c);
+		if(c == 'i')
+		{
+			newfintrans->type = income;
+			break;
+		}
+		if(c == 'e')
+		{
+			newfintrans->type = expense;
+			break;
+		}
+		while(getc(stdin) != '\n') {}
+	}
+	getc(stdin);
+
+	printf("Please enter an amount for the transaction (positive numbers only): ");
+	getline(&response,&responsenumchars,stdin);
+	//printf("Amount response: %s",response);
+	char* tailptr = NULL;
+	newfintrans->amount = strtol(response,&tailptr,10)*100;
+	if(*tailptr == '.')
+	{
+		response = ++tailptr;
+		int cents = strtol(response,&tailptr,10);
+		while(cents >= 100) cents = cents / 10;
+		newfintrans->amount = newfintrans->amount + cents;
+	}
+
+	while(1)
+	{
+		printf("Please enter a description for the new transaction:\n");
+		getline(&response,&responsenumchars,stdin);
+		printf("Your response: %s",response);
+		char* newlinesearch = response;
+		while(*newlinesearch++ != '\n');
+		if(newlinesearch == response) continue;
+		*newlinesearch = '\0';
+		newfintrans->description = strdup(response);
+		break;
+	}
+
+	while(1)
+	{
+		printf("Please enter the outside party name for the transaction:\n");
+		getline(&response,&responsenumchars,stdin);
+		char* newlinesearch = response;
+		while(*newlinesearch++ != '\n');
+		if(newlinesearch == response) continue;
+		*newlinesearch = '\0';
+		newfintrans->outsideparty = strdup(response);
+		break;
+	}
+
+	if(newfintrans->type == income) fintransaccount->balance += newfintrans->amount;
+	else fintransaccount->balance -= newfintrans->amount;
+
+	printf("Your new account balance for account %s is $%d.%02d\n",fintransaccount->name,(fintransaccount->balance)/100,(fintransaccount->balance)%100);
+	while(getc(stdin) != '\n');
 	return;
 }
 

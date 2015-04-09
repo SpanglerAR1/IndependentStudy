@@ -38,7 +38,13 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	while(mainmenu(Register)) {};
+	system("clear");
+	list_accts(Register);
+	while(mainmenu(Register))
+	{
+		system("clear");
+		list_accts(Register);
+	}
 	savefile(Register,regfile);
 	return 0;
 }
@@ -232,8 +238,10 @@ void savefile(financialregister_t& reg, FILE* outfile)
 {
 	printf("Saving...\n");
 	fseek(outfile,0,SEEK_SET);
+	printf("The call to fseek succeeded\n");
 	if(fputs("Accounts:\n",outfile) == EOF) return;
 	account_t* currentaccount = reg.firstaccount;
+	printf("Now processing account %s\n",currentaccount->name);
 	while(currentaccount != NULL)
 	{
 		fprintf(outfile,"Account Name:%s\n",currentaccount->name);
