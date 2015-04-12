@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
 					continue;
 				}
 				printf("File %s opened successfully.\n",filename);
+				break;
 			}
 		}
 		else
