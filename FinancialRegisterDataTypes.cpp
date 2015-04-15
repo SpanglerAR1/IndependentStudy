@@ -3,7 +3,9 @@
 #define	__FRDT_VERSION_ID	"0.0.1"
 // Last updated: 3/18/2015
 
-#include<time.h>
+#include<stdlib.h>
+#include<error.h>
+#include<errno.h>
 
 #ifndef	__FRDT_GUARD
 #define	__FRDT_GUARD
@@ -59,5 +61,16 @@ struct	financialregister_t
 	account_t*	firstaccount;
 	account_t*	lastaccount;
 };
+
+void* xmalloc(size_t size)
+{
+	void* newptr = 0;
+	newptr = malloc(size);
+	if(newptr == 0)
+	{
+		error(1,errno,"call to malloc failed");
+	}
+	return newptr;
+}
 
 #endif

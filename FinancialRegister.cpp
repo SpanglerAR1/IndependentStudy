@@ -96,7 +96,6 @@ int main(int argc, char* argv[])
 		list_accts(Register);
 	}
 	fclose(regfile);
-	printf("File Closed\n");
 	regfile = fopen(filename,"w");
 	printf("File %s reopened for writing\n",filename);
 	savefile(Register,regfile);
@@ -135,7 +134,7 @@ int init(financialregister_t& reg,FILE* infile)
 			char* newlinesearch = nextchar;
 			while(*newlinesearch != '\n') newlinesearch++;
 			*newlinesearch = '\0';
-			account_t* newaccount = (account_t*)malloc(sizeof(account_t));
+			account_t* newaccount = (account_t*)xmalloc(sizeof(account_t));
 			if(reg.firstaccount == NULL)
 			{
 				reg.firstaccount = newaccount;
@@ -197,7 +196,7 @@ int init(financialregister_t& reg,FILE* infile)
 			{
 				while(strcmp(nextline,"End Transactions\n"))
 				{
-					fintrans_t* newfintrans = (fintrans_t*)malloc(sizeof(fintrans_t));
+					fintrans_t* newfintrans = (fintrans_t*)xmalloc(sizeof(fintrans_t));
 					if(newaccount->firstfintrans = NULL)
 					{
 						newaccount->firstfintrans = newfintrans;
@@ -228,8 +227,6 @@ int init(financialregister_t& reg,FILE* infile)
 		}
 	}
 
-	fflush(infile);
-	fclose(infile);
 	printf("Initialization Complete...\n");
 	return 0;
 }

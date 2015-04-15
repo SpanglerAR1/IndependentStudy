@@ -86,7 +86,7 @@ void add_trans (financialregister_t& reg)
 		return;
 	}
 
-	fintrans_t* newfintrans = (fintrans_t*)malloc(sizeof(fintrans_t));
+	fintrans_t* newfintrans = (fintrans_t*)xmalloc(sizeof(fintrans_t));
 	newfintrans->previousfintrans = NULL;
 	newfintrans->nextfintrans = NULL;	
 	account_t* fintransaccount = reg.firstaccount;
@@ -231,7 +231,7 @@ void man_accts (financialregister_t& reg)
 void add_acct(financialregister_t& reg)
 {
 	printf("Creating new account...\n");
-	account_t* newaccount = (account_t*)malloc(sizeof(account_t));
+	account_t* newaccount = (account_t*)xmalloc(sizeof(account_t));
 	if(reg.numaccounts == 0)
 	{
 		reg.firstaccount = newaccount;
