@@ -73,4 +73,26 @@ void* xmalloc(size_t size)
 	return newptr;
 }
 
+// This function comes via the GNU C Library Manual.
+int yorn(const char* question)
+{
+	fputs(question,stdout);
+	while (1)
+	{
+		int c, answer;
+		/* Write a space to separate answer from question. */
+		fputc(' ', stdout);
+		/* Read the first character of the line.
+		This should be the answer character, but might not be. */
+		c = tolower(getc(stdin));
+		answer = c;
+		/* Discard rest of input line. */
+		while((c != '\n') && (c != EOF)) c = getc (stdin);
+		/* Obey the answer if it was valid. */
+		if(answer == 'y') return 1;
+		if(answer == 'n') return 0;
+		/* Answer was invalid: ask for valid answer. */
+		fputs ("Please answer y or n:", stdout);
+	}
+}
 #endif

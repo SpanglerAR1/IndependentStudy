@@ -1,27 +1,29 @@
 Accounts:
 Account Name:MutualPNC
 Account Type:Checking
-Balance (cents):293383
+Balance (cents):211700
 Begin Transactions:
+1:1003:Groceries:Aldi
 End Transactions
 Account Name:AdamFulton
 Account Type:Checking
-Balance (cents):270550
+Balance (cents):70550
 Begin Transactions:
 End Transactions
 Account Name:PNCGrowth
 Account Type:Savings
-Balance (cents):29
+Balance (cents):400029
 Begin Transactions:
 End Transactions
 Account Name:AdamCC
 Account Type:CreditCard
-Balance (cents):14733
+Balance (cents):19853
 Begin Transactions:
+0:2897:Gas:Gas station
 End Transactions
 Account Name:JennyCC
 Account Type:CreditCard
-Balance (cents):79454
+Balance (cents):79452
 Begin Transactions:
 End Transactions
 Account Name:AmEx
@@ -30,4 +32,3 @@ Balance (cents):19783
 Begin Transactions:
 End Transactions
 End Accounts
-ÿ

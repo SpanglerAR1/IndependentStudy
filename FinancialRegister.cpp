@@ -11,7 +11,6 @@
 #include "FinancialRegisterDataTypes.cpp"
 #include "FinancialRegisterMainMenu.cpp"
 
-int 	yorn		(const char* question);
 int	init		(financialregister_t& reg,FILE* infile);
 void	savefile	(financialregister_t& reg,FILE* outfile);
 
@@ -74,7 +73,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	printf("The filename is %s\n",filename);
+	// printf("The filename is %s\n",filename);
 
 	// Second step: Load values from the .reg file and initialize the register object
 	financialregister_t Register;
@@ -88,16 +87,16 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	//system("clear");
+	system("clear");
 	list_accts(Register);
 	while(mainmenu(Register))
 	{
-		//system("clear");
+		system("clear");
 		list_accts(Register);
 	}
 	fclose(regfile);
 	regfile = fopen(filename,"w");
-	printf("File %s reopened for writing\n",filename);
+//	printf("File %s reopened for writing\n",filename);
 	savefile(Register,regfile);
 	return 0;
 }
@@ -151,6 +150,9 @@ int init(financialregister_t& reg,FILE* infile)
 				newaccount->nextaccount = NULL;
 				reg.numaccounts++;
 			}
+			newaccount->numfintrans = 0;
+			newaccount->firstfintrans = NULL;
+			newaccount->lastfintrans = NULL;
 			newaccount->name = strdup(nextchar);
 			//printf("New Account name, as read by program: %s\n",newaccount->name);
 
@@ -197,7 +199,7 @@ int init(financialregister_t& reg,FILE* infile)
 				while(strcmp(nextline,"End Transactions\n"))
 				{
 					fintrans_t* newfintrans = (fintrans_t*)xmalloc(sizeof(fintrans_t));
-					if(newaccount->firstfintrans = NULL)
+					if(newaccount->firstfintrans == NULL)
 					{
 						newaccount->firstfintrans = newfintrans;
 						newaccount->lastfintrans = newfintrans;
@@ -237,12 +239,12 @@ void savefile(financialregister_t& reg, FILE* outfile)
 {
 	printf("Saving...\n");
 	fseek(outfile,0,SEEK_SET);
-	printf("The call to fseek succeeded\n");
+	// printf("The call to fseek succeeded\n");
 	if(fputs("Accounts:\n",outfile) == EOF) return;
 	account_t* currentaccount = reg.firstaccount;
-	printf("Now processing account %s\n",currentaccount->name);
 	while(currentaccount != NULL)
 	{
+		// printf("Now saving account %s\n",currentaccount->name);
 		fprintf(outfile,"Account Name:%s\n",currentaccount->name);
 
 		fprintf(outfile,"Account Type:");
@@ -277,31 +279,7 @@ void savefile(financialregister_t& reg, FILE* outfile)
 	}
 
 	fprintf(outfile,"End Accounts\n");
-	fputc(EOF,outfile);
 	fflush(outfile);
 	fclose(outfile);
 	return;
-}
-
-// This function comes via the GNU C Library Manual.
-int yorn(const char* question)
-{
-	fputs(question,stdout);
-	while (1)
-	{
-		int c, answer;
-		/* Write a space to separate answer from question. */
-		fputc(' ', stdout);
-		/* Read the first character of the line.
-		This should be the answer character, but might not be. */
-		c = tolower(getc(stdin));
-		answer = c;
-		/* Discard rest of input line. */
-		while((c != '\n') && (c != EOF)) c = getc (stdin);
-		/* Obey the answer if it was valid. */
-		if(answer == 'y') return 1;
-		if(answer == 'n') return 0;
-		/* Answer was invalid: ask for valid answer. */
-		fputs ("Please answer y or n:", stdout);
-	}
 }

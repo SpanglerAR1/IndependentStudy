@@ -88,7 +88,7 @@ void add_trans (financialregister_t& reg)
 
 	fintrans_t* newfintrans = (fintrans_t*)xmalloc(sizeof(fintrans_t));
 	newfintrans->previousfintrans = NULL;
-	newfintrans->nextfintrans = NULL;	
+	newfintrans->nextfintrans = NULL;
 	account_t* fintransaccount = reg.firstaccount;
 
 	while(1)
@@ -144,7 +144,7 @@ void add_trans (financialregister_t& reg)
 	}
 	getc(stdin);
 
-	printf("Please enter an amount for the transaction (positive numbers only): ");
+	printf("Please enter an amount for the transaction (positive numbers only, no commas): ");
 	getline(&response,&responsenumchars,stdin);
 	//printf("Amount response: %s",response);
 	char* tailptr = NULL;
@@ -161,10 +161,10 @@ void add_trans (financialregister_t& reg)
 	{
 		printf("Please enter a description for the new transaction:\n");
 		getline(&response,&responsenumchars,stdin);
-		printf("Your response: %s",response);
+		// printf("Your response: %s",response);
+		if(*response == '\n') continue;
 		char* newlinesearch = response;
-		while(*newlinesearch++ != '\n');
-		if(newlinesearch == response) continue;
+		while(*(++newlinesearch) != '\n');
 		*newlinesearch = '\0';
 		newfintrans->description = strdup(response);
 		break;
@@ -174,9 +174,9 @@ void add_trans (financialregister_t& reg)
 	{
 		printf("Please enter the outside party name for the transaction:\n");
 		getline(&response,&responsenumchars,stdin);
+		if(*response == '\n') continue;
 		char* newlinesearch = response;
-		while(*newlinesearch++ != '\n');
-		if(newlinesearch == response) continue;
+		while(*(++newlinesearch) != '\n');
 		*newlinesearch = '\0';
 		newfintrans->outsideparty = strdup(response);
 		break;
@@ -186,7 +186,7 @@ void add_trans (financialregister_t& reg)
 	else fintransaccount->balance -= newfintrans->amount;
 
 	printf("Your new account balance for account %s is $%d.%02d\n",fintransaccount->name,(fintransaccount->balance)/100,(fintransaccount->balance)%100);
-	while(getc(stdin) != '\n');
+	if(yorn("Add another transaction?")) add_trans(reg);
 	return;
 }
 
