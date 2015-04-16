@@ -1,21 +1,27 @@
 // SingleThreadPrimeTest.cpp
 // By Adam R. Spangler, created on 4/15/2015
 #define	__FR_VERSION_ID	"0.0.1"
-// Last updated: 4/15/2015
+// Last updated: 4/16/2015
 
 #include<stdio.h>
 #include<time.h>
-#include<unistd.h>
-#include<wait.h>
+#include<pthread.h>
 
-#define MAX_INT	10000000
+#define 	MAX_INT		10000000
+#typedef	primeint	unsigned long long int;
 
-int	chkprime	(unsigned long long int num);
+int	chkprimes	(primeint startnum, primeint endnum);
+int	isprime		(primeint num);
 
 int main(int argc, char* argv[])
 {
 	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__FR_VERSION_ID);
 	printf("Today, I will be generating primes up to %d\n",MAX_INT);
+
+		
+
+
+
 
 	unsigned long long int currentnum;
 	unsigned long long int endint;
@@ -43,7 +49,7 @@ int main(int argc, char* argv[])
 	
 	while(currentnum++ <= endint)
 	{
-		if(chkprime(currentnum))
+		if(isprime(currentnum))
 		{
 			numprimes++;
 			//printf("%d\n",(int)currentnum);
@@ -63,7 +69,13 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-int chkprime(unsigned long long int num)
+int	chkprimes	(primeint startnum, primeint endnum)
+{
+	
+	return 0;
+}
+
+int isprime(primeint num)
 {
 	if(num <= 1) return 0; // zero and one are not prime
 	if((num == 2) || (num == 3)) return 1;
