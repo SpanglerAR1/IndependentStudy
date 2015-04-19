@@ -4,75 +4,70 @@
 // Last updated: 4/16/2015
 
 #include<stdio.h>
+#include<unistd.h>
 #include<time.h>
 #include<pthread.h>
 
 #define 	MAX_INT		10000000
-#typedef	primeint	unsigned long long int;
+#define		NUM_THREADS	2
+#typedef	primeint	unsigned long long int
 
-int	chkprimes	(primeint startnum, primeint endnum);
+struct	threadarg_t
+{
+	primeint	startnum;
+	primeint	endnum;
+};
+
+threadarg_t	threadargarray[NUM_THREADS];
+unsigned int	numprimes;
+
+void*	chkprimes	(void* threadarg);
 int	isprime		(primeint num);
 
 int main(int argc, char* argv[])
 {
 	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__FR_VERSION_ID);
-	printf("Today, I will be generating primes up to %d\n",MAX_INT);
+	printf("Today, I will be generating primes up to %d, ",MAX_INT);
+	printf("using %d threads.\n",NUM_THREADS);
 
-		
-
-
-
-
-	unsigned long long int currentnum;
-	unsigned long long int endint;
-	int isparent;
-	pid_t PID = fork();
-	if(PID)
-	{
-		// Parent Process		
-		currentnum = 0;
-		endint = MAX_INT / 2;
-		isparent = 1;
-	}
-	else
-	{
-		currentnum = MAX_INT / 2 + 1;
-		endint = MAX_INT;
-		isparent = 0;
-	}
-	
-	
 	clock_t start = clock();
 	clock_t end;
-	int numprimes = 0;
 	double cpu_time_used = 0;
-	
-	while(currentnum++ <= endint)
-	{
-		if(isprime(currentnum))
-		{
-			numprimes++;
-			//printf("%d\n",(int)currentnum);
-		}
-		end = clock();
-		if((end-start >= 10000) && isparent)
-		{
-			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-			printf("\rCurrent Prime: %d",(int)currentnum);
-			printf("  Primes per second: %f",((double) numprimes) / cpu_time_used);
-			start = clock();
-		}
-	}
-	printf("\n");
 
-	if(isparent) waitpid(PID,NULL,0);
-	return 0;
+	numprimes = 0;
+	pthread_t threads[NUM_THREADS];
+	threadargarray[0].startnum = 0;
+	threadargarray[0].endnum = MAX_INT/NUM_THREADS;
+	for(int n = 1; n < NUM_THREADS; n++)
+	{
+		threadargarray[n].startnum = threadargarray[n-1] + 1;
+		threadargarray[n].endnum = MAX_INT/NUM_THREADS * (n + 1);
+	}
+
+	for(int i = 0; i < NUM_THREADS; i++)
+	{
+		pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]);
+	}
+
+	while(1)
+	{
+		cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+		printf("\rPrimes per second: %f",((double) numprimes) / cpu_time_used);
+		start = clock();
+		sleep(1);
+	}
+
+	printf("\n");
+	pthread_exit(NULL);
 }
 
-int	chkprimes	(primeint startnum, primeint endnum)
+void*	chkprimes	(void* threadarg)
 {
-	
-	return 0;
+	threadarg_t* input_arguments = (threadarg_t*)threadarg;
+	primeint startnum = input_arguments->startnum;
+	primeint endnum = input_arguments->endnum;
+	for(primeint currentnum = startnum; currentnum <= endnum; currentnum++); if(isprime(currentnum)) numprimes++;
+	pthread_exit(0);
 }
 
 int isprime(primeint num)
