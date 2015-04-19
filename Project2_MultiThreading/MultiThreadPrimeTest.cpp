@@ -7,9 +7,11 @@
 #include<unistd.h>
 #include<time.h>
 #include<pthread.h>
+#include<stdlib.h>
 
 #define MAX_INT		10000000
-#define	NUM_THREADS	16
+#define	MAX_THREADS	32
+#define NUM_THREADS	2
 typedef	unsigned long long int	primeint;
 
 struct	threadarg_t
@@ -18,7 +20,8 @@ struct	threadarg_t
 	primeint	endnum;
 };
 
-threadarg_t	threadargarray[NUM_THREADS];
+int		num_threads;
+threadarg_t	threadargarray[MAX_THREADS];
 primeint	numprimes;
 
 void*	chkprimes	(void* threadarg);
@@ -26,9 +29,15 @@ int	isprime		(primeint num);
 
 int main(int argc, char* argv[])
 {
+	if(argc == 2)
+	{
+		num_threads = atol(argv[1]);
+		if(num_threads == 0) num_threads = NUM_THREADS;
+	}
+	else num_threads = NUM_THREADS;
 	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__FR_VERSION_ID);
 	printf("Today, I will be generating primes up to %d, ",MAX_INT);
-	printf("using %d threads.\n",NUM_THREADS);
+	printf("using %d threads.\n",num_threads);
 
 	clock_t start = clock();
 	clock_t end;
@@ -37,16 +46,16 @@ int main(int argc, char* argv[])
 	numprimes = 0;
 	pthread_t threads[NUM_THREADS];
 	threadargarray[0].startnum = 0;
-	threadargarray[0].endnum = MAX_INT/NUM_THREADS;
+	threadargarray[0].endnum = MAX_INT/num_threads;
 	printf("First element initialized.\n");
-	for(int n = 1; n < NUM_THREADS; n++)
+	for(int n = 1; n < num_threads; n++)
 	{
 		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
 		threadargarray[n].endnum = MAX_INT/NUM_THREADS * (n + 1);
 		printf("Element %d initialized.\n",n);
 	}
 
-	for(int i = 0; i < NUM_THREADS; i++)
+	for(int i = 0; i < num_threads; i++)
 	{
 		if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i])) printf("Thread creation error!\n");
 		else printf("Thread creation succeeded\n");

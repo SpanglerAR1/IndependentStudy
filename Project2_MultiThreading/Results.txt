@@ -1,0 +1,13 @@
+The results of my multi-thread prime test, searching for primes up to 10,000,000:
+
+On a Dell Vostro 1500 Core 2 Duo laptop running Ubuntu 14.04:
+Workers:	Real Time:	User Time:
+1		30.013 sec	27.497 sec
+2		22.012 sec	30.269 sec
+3		32.015 sec	55.339 sec
+4		46.018 sec	1m23.248 sec
+5		1m2.019 sec	1m54.094 sec
+6		
+7
+8
+
