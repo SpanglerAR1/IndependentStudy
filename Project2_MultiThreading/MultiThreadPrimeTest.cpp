@@ -8,7 +8,7 @@
 #include<time.h>
 #include<pthread.h>
 
-#define MAX_INT		10000000
+#define MAX_INT		1000000
 #define	NUM_THREADS	16
 typedef	unsigned long long int	primeint;
 
