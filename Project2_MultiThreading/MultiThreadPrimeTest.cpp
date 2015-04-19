@@ -8,9 +8,9 @@
 #include<time.h>
 #include<pthread.h>
 
-#define 	MAX_INT		10000000
-#define		NUM_THREADS	2
-#typedef	primeint	unsigned long long int
+#define MAX_INT		10000000
+#define	NUM_THREADS	16
+typedef	unsigned long long int	primeint;
 
 struct	threadarg_t
 {
@@ -19,7 +19,7 @@ struct	threadarg_t
 };
 
 threadarg_t	threadargarray[NUM_THREADS];
-unsigned int	numprimes;
+primeint	numprimes;
 
 void*	chkprimes	(void* threadarg);
 int	isprime		(primeint num);
@@ -38,23 +38,29 @@ int main(int argc, char* argv[])
 	pthread_t threads[NUM_THREADS];
 	threadargarray[0].startnum = 0;
 	threadargarray[0].endnum = MAX_INT/NUM_THREADS;
+	printf("First element initialized.\n");
 	for(int n = 1; n < NUM_THREADS; n++)
 	{
-		threadargarray[n].startnum = threadargarray[n-1] + 1;
+		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
 		threadargarray[n].endnum = MAX_INT/NUM_THREADS * (n + 1);
+		printf("Element %d initialized.\n",n);
 	}
 
 	for(int i = 0; i < NUM_THREADS; i++)
 	{
-		pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]);
+		if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i])) printf("Thread creation error!\n");
+		else printf("Thread creation succeeded\n");
 	}
 
 	while(1)
 	{
+		end = clock();
 		cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-		printf("\rPrimes per second: %f",((double) numprimes) / cpu_time_used);
-		start = clock();
-		sleep(1);
+		printf("Primes per second: %0.2f\n",((double) numprimes) / cpu_time_used);
+		primeint oldnumprimes = numprimes;
+		sleep(2);
+		primeint newnumprimes = numprimes;
+		if(oldnumprimes == newnumprimes) break;
 	}
 
 	printf("\n");
@@ -66,8 +72,14 @@ void*	chkprimes	(void* threadarg)
 	threadarg_t* input_arguments = (threadarg_t*)threadarg;
 	primeint startnum = input_arguments->startnum;
 	primeint endnum = input_arguments->endnum;
+	primeint currentnum = startnum;
+	while(currentnum <= endnum)
+	{
+		if(isprime(currentnum)) numprimes++;
+		currentnum++;
+	}
 	for(primeint currentnum = startnum; currentnum <= endnum; currentnum++); if(isprime(currentnum)) numprimes++;
-	pthread_exit(0);
+	pthread_exit(NULL);
 }
 
 int isprime(primeint num)
