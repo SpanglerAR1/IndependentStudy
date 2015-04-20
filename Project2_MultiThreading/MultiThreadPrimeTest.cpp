@@ -9,7 +9,7 @@
 #include<pthread.h>
 #include<stdlib.h>
 
-#define MAX_INT		10000000
+#define MAX_INT		5000000
 #define	MAX_THREADS	32
 #define NUM_THREADS	2
 typedef	unsigned long long int	primeint;
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 	for(int n = 1; n < num_threads; n++)
 	{
 		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
-		threadargarray[n].endnum = MAX_INT/NUM_THREADS * (n + 1);
+		threadargarray[n].endnum = MAX_INT/num_threads * (n + 1);
 	}
 
 	for(int i = 0; i < num_threads; i++)
