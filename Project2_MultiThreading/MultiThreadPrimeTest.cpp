@@ -16,14 +16,15 @@ typedef	unsigned long long int	primeint;
 
 struct	threadarg_t
 {
+	int		threadid;
 	primeint	startnum;
 	primeint	endnum;
-	primeint	intschecked;
 };
 
 int		num_threads;
 threadarg_t	threadargarray[MAX_THREADS];
 primeint	numprimes;
+primeint	intschecked[MAX_THREADS];
 
 void*	chkprimes	(void* threadarg);
 int	isprime		(primeint num);
@@ -45,14 +46,15 @@ int main(int argc, char* argv[])
 	double cpu_time_used = 0;
 
 	numprimes = 0;
+	intschecked[0] = 0;
 	pthread_t threads[NUM_THREADS];
 	threadargarray[0].startnum = 0;
 	threadargarray[0].endnum = MAX_INT/num_threads;
-	threadargarray[0].intschecked = 0;
 	for(int n = 1; n < num_threads; n++)
 	{
 		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
 		threadargarray[n].endnum = MAX_INT/num_threads * (n + 1);
+		intschecked[n] = 0;
 	}
 
 	for(int i = 0; i < num_threads; i++)
@@ -69,8 +71,8 @@ int main(int argc, char* argv[])
 		printf("Primes per second: %0.2f\t",((double) numprimes) / cpu_time_used);
 		for(int j = 0; j < num_threads; j++)
 		{
-			numintschkd += threadargarray[j].intschecked;
-			threadargarray[j].intschecked = 0;
+			numintschkd += intschecked[j];
+			intschecked[j] = 0;
 		}
 		printf("%d integers have been examined.\n",numintschkd);
 		primeint oldnumprimes = numprimes;
@@ -92,7 +94,7 @@ void*	chkprimes	(void* threadarg)
 	while(currentnum <= endnum)
 	{
 		if(isprime(currentnum)) numprimes++;
-		input_arguments->intschecked = input_arguments->intschecked + 1;
+		intschecked[input_arguments->threadid] += 1;
 		currentnum++;
 	}
 	pthread_exit(NULL);
