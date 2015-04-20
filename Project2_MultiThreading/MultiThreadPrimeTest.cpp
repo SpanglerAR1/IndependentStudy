@@ -49,12 +49,16 @@ int main(int argc, char* argv[])
 	intschecked[0] = 0;
 	pthread_t threads[NUM_THREADS];
 	threadargarray[0].startnum = 0;
-	threadargarray[0].endnum = MAX_INT/num_threads;
+	threadargarray[0].endnum = MAX_INT / num_threads;
+	threadargarray[0].threadid = 0;
+	printf("Worker 0 will be iterating through %d to %d\n",threadargarray[0].startnum,threadargarray[0].endnum);
 	for(int n = 1; n < num_threads; n++)
 	{
 		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
 		threadargarray[n].endnum = MAX_INT/num_threads * (n + 1);
+		printf("Worker %d will be iterating through %d to %d\n",n,threadargarray[n].startnum,threadargarray[n].endnum);
 		intschecked[n] = 0;
+		threadargarray[n].threadid = n;
 	}
 
 	for(int i = 0; i < num_threads; i++)
@@ -66,15 +70,16 @@ int main(int argc, char* argv[])
 	primeint numintschkd = 0;
 	while(1)
 	{
-		end = clock();
-		cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-		printf("Primes per second: %0.2f\t",((double) numprimes) / cpu_time_used);
+		//end = clock();
+		//cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+		//printf("Primes per second: %0.2f\t",((double) numprimes) / cpu_time_used);
 		for(int j = 0; j < num_threads; j++)
 		{
-			numintschkd += intschecked[j];
+			printf("Worker %d: %d\t",j,intschecked[j]);
+			numintschkd = numintschkd + intschecked[j];
 			intschecked[j] = 0;
 		}
-		printf("%d integers have been examined.\n",numintschkd);
+		printf("%d integers examined.\n",(int)numintschkd);
 		primeint oldnumprimes = numprimes;
 		sleep(1);
 		primeint newnumprimes = numprimes;
