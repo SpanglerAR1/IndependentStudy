@@ -18,6 +18,7 @@ struct	threadarg_t
 {
 	primeint	startnum;
 	primeint	endnum;
+	primeint	intschecked;
 };
 
 int		num_threads;
@@ -47,27 +48,33 @@ int main(int argc, char* argv[])
 	pthread_t threads[NUM_THREADS];
 	threadargarray[0].startnum = 0;
 	threadargarray[0].endnum = MAX_INT/num_threads;
-	printf("First element initialized.\n");
+	threadargarray[0].intschecked = 0;
 	for(int n = 1; n < num_threads; n++)
 	{
 		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
 		threadargarray[n].endnum = MAX_INT/NUM_THREADS * (n + 1);
-		printf("Element %d initialized.\n",n);
 	}
 
 	for(int i = 0; i < num_threads; i++)
 	{
 		if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i])) printf("Thread creation error!\n");
-		else printf("Thread creation succeeded\n");
+		else printf("Thread %d creation succeeded\n",i);
 	}
 
+	primeint numintschkd = 0;
 	while(1)
 	{
 		end = clock();
 		cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-		printf("Primes per second: %0.2f\n",((double) numprimes) / cpu_time_used);
+		printf("Primes per second: %0.2f\t",((double) numprimes) / cpu_time_used);
+		for(int j = 0; j < num_threads; j++)
+		{
+			numintschkd += threadargarray[j].intschecked;
+			threadargarray[j].intschecked = 0;
+		}
+		printf("%d integers have been examined.\n",numintschkd);
 		primeint oldnumprimes = numprimes;
-		sleep(2);
+		sleep(1);
 		primeint newnumprimes = numprimes;
 		if(oldnumprimes == newnumprimes) break;
 	}
@@ -85,9 +92,9 @@ void*	chkprimes	(void* threadarg)
 	while(currentnum <= endnum)
 	{
 		if(isprime(currentnum)) numprimes++;
+		input_arguments->intschecked = input_arguments->intschecked + 1;
 		currentnum++;
 	}
-	for(primeint currentnum = startnum; currentnum <= endnum; currentnum++); if(isprime(currentnum)) numprimes++;
 	pthread_exit(NULL);
 }
 
