@@ -13,8 +13,8 @@
 #include	<arpa/inet.h>
 #include	<netdb.h>
 
-#define	PORT		1000
-#define	MAXMSG		512
+#define	PORT		3000
+#define	MAXMSG		32
 #define	MAXCLIENTS	8
 
 //These two functions, along with most of main(), come from the GNU C library manual
@@ -88,9 +88,12 @@ int main(void)
 
 int read_from_client(int filedes)
 {
+	printf("In function read_from_client2\n");
 	char buffer[MAXMSG];
+	printf("MAXMSG=%d\n",MAXMSG);
 	int nbytes;
 	nbytes = read(filedes,buffer,MAXMSG);
+	printf("The number of bytes read is %d\n",nbytes);
 	if (nbytes < 0)
 	{
 		perror ("Server side read error\n");
@@ -100,7 +103,7 @@ int read_from_client(int filedes)
 	else
 	{
 		/* Data read. */
-		fprintf (stderr, "Server: got message: ‘%s’\n", buffer);
+		printf("Server: got message: ‘%s’\n", buffer);
 		return 0;
 	}
 }

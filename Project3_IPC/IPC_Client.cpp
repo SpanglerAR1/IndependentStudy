@@ -3,6 +3,88 @@
 #define	__IPC_VERSION_ID	"0.0.1"
 // Last updated: 4/26/2015
 
+#include	<stdio.h>
+#include	<errno.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+#include	<sys/types.h>
+#include	<sys/socket.h>
+#include	<netinet/in.h>
+#include	<arpa/inet.h>
+#include	<netdb.h>
+#include	<string.h>
+
+#define 	PORT		3000
+#define 	MESSAGE		"Yow!!! Are we having fun yet?!?"
+
+void	write_to_server	(int filedes);
+void 	init_sockaddr	(struct sockaddr_in *name,const char *hostname,uint16_t port);
+
+int main(int argc, char* argv[])
+{
+	if(argc != 2)
+	{
+		perror("Must specify server address\n");
+		exit(EXIT_FAILURE);
+	}
+	char* SERVERHOST = argv[1];
+
+	//extern void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port);
+
+	/* Create the socket. */
+	int sock;
+	sock = socket(PF_INET,SOCK_STREAM,0);
+	if (sock < 0)
+	{
+		perror ("socket creation failure, client side\n");
+		exit (EXIT_FAILURE);
+	}
+
+	/* Connect to the server. */
+	struct sockaddr_in servername;
+	init_sockaddr(&servername,SERVERHOST,PORT);
+	if (0 > connect(sock,(struct sockaddr *) &servername,sizeof (servername)))
+	{
+		perror ("Client side connection failure\n");
+		exit (EXIT_FAILURE);
+	}
+
+	/* Send data to the server. */
+	write_to_server (sock);
+	close (sock);
+	exit (EXIT_SUCCESS);
+}
+
+void	write_to_server	(int filedes)
+{
+	int nbytes;
+	printf("Writing message %s to server\n",MESSAGE);
+	nbytes = write(filedes, MESSAGE, strlen(MESSAGE) + 1);
+	printf("Number of bytes written: %d\n",nbytes);
+	if (nbytes < 0)
+	{
+		perror ("Client side write error\n");
+		exit (EXIT_FAILURE);
+	}
+}
+
+void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port)
+{
+	struct hostent *hostinfo;
+	name->sin_family = AF_INET;
+	name->sin_port = htons (port);
+	hostinfo = gethostbyname (hostname);
+	if (hostinfo == NULL)
+	{
+		fprintf (stderr, "Unknown host %s.\n", hostname);
+		exit (EXIT_FAILURE);
+	}
+	name->sin_addr = *(struct in_addr *) hostinfo->h_addr;
+}
+
+
+
+/*
 #include<stdio.h>
 #include<unistd.h>
 #include<time.h>
@@ -115,3 +197,4 @@ int isprime(primeint num)
 	return 1;
 }
 
+*/
