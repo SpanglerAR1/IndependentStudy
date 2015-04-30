@@ -14,7 +14,7 @@
 #include	<netdb.h>
 
 #define	PORT		3000
-#define	MAXMSG		32
+#define	MAXMSG		64
 #define	MAXCLIENTS	8
 
 //These two functions, along with most of main(), come from the GNU C library manual
@@ -25,7 +25,8 @@ int main(void)
 {
 	/* Create the socket and set it up to accept connections. */
 	int sock;
-	sock = make_socket (PORT);
+	sock = make_socket(PORT);
+	printf("The file descriptor of the socket is %d\n",sock);
 	if (listen(sock,MAXCLIENTS) < 0)
 	{
 		perror ("Failed to set up listening functionality on the server side\n");
@@ -33,18 +34,17 @@ int main(void)
 	}
 
 	/* Initialize the set of active sockets. */
-	fd_set active_fd_set;
-	fd_set read_fd_set;
+	fd_set fd_set;
 	// Initialize active_fd_set to zero
-	FD_ZERO (&active_fd_set);
+	FD_ZERO (&fd_set);
 	// Add sock to the active file descriptor set
-	FD_SET (sock, &active_fd_set);
+	FD_SET (sock, &fd_set);
 
 	while (1)
 	{
 		/* Block until input arrives on one or more active sockets. */
-		read_fd_set = active_fd_set;
-		if (select (FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0)
+		printf("Waiting for input\n");
+		if (select(FD_SETSIZE, &fd_set, NULL, NULL, NULL) < 0)
 		{
 			perror ("Select error: failed to wait for input on server side\n");
 			exit (EXIT_FAILURE);
@@ -54,8 +54,9 @@ int main(void)
 		int i;
 		for (i = 0; i < FD_SETSIZE; ++i)
 		{
-			if(FD_ISSET(i,&read_fd_set))
+			if(FD_ISSET(i,&fd_set))
 			{
+				printf("Now processing file descriptor %d\n",i);
 				if (i == sock)
 				{
 					/* Connection request on original socket. */
@@ -69,17 +70,18 @@ int main(void)
 						perror ("Incoming connection attempt failed, server accept function\n");
 						exit (EXIT_FAILURE);
 					}
-					fprintf (stderr,"Server: connect from host %s, port %hd.\n",inet_ntoa (clientname.sin_addr),ntohs(clientname.sin_port));
-					FD_SET(receivesocket,&active_fd_set);
+					printf ("Server: connect from host %s, port %d.\n",inet_ntoa (clientname.sin_addr),ntohs(clientname.sin_port));
+					FD_SET(receivesocket,&fd_set);
 				}
-			}
-			else
-			{
-				/* Data arriving on an already-connected socket. */
-				if(read_from_client(i) < 0)
+				else
 				{
-					close(i);
-					FD_CLR(i, &active_fd_set);
+					/* Data arriving on an already-connected socket. */
+					if(read_from_client(i) < 0)
+					{
+						close(i);
+						printf("Clearing %d\n",i);
+						FD_CLR(i,&fd_set);
+					}
 				}
 			}
 		}
@@ -93,7 +95,6 @@ int read_from_client(int filedes)
 	printf("MAXMSG=%d\n",MAXMSG);
 	int nbytes;
 	nbytes = read(filedes,buffer,MAXMSG);
-	printf("The number of bytes read is %d\n",nbytes);
 	if (nbytes < 0)
 	{
 		perror ("Server side read error\n");
@@ -103,7 +104,7 @@ int read_from_client(int filedes)
 	else
 	{
 		/* Data read. */
-		printf("Server: got message: ‘%s’\n", buffer);
+		write(filedes,"Server received message",strlen("Server received message"));
 		return 0;
 	}
 }
@@ -112,7 +113,7 @@ int make_socket(uint16_t port)
 {
 	/* Create the socket. */
 	int sock;
-	sock = socket (PF_INET, SOCK_STREAM, 0);
+	sock = socket (AF_INET, SOCK_STREAM, 0);
 	if (sock < 0)
 	{
 		perror ("Failed to create a new socket\n");
@@ -123,7 +124,7 @@ int make_socket(uint16_t port)
 	struct sockaddr_in name;
 	name.sin_family = AF_INET;
 	name.sin_port = htons(port);
-	name.sin_addr.s_addr = htonl(INADDR_ANY);
+	name.sin_addr.s_addr = INADDR_ANY;
 	if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
 	{
 		perror ("Failed to bind to the new socket\n");
