@@ -21,7 +21,7 @@
 int	read_from_client	(int filedes);
 int 	make_socket		(uint16_t port);
 
-int main(void)
+int 	Init_Socket()
 {
 	/* Create the socket and set it up to accept connections. */
 	int sock;
