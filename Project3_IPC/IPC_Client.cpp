@@ -53,7 +53,7 @@ void 	init_sockaddr	(struct sockaddr_in *name,const char *hostname,uint16_t port
 int main(int argc, char* argv[])
 {
 	if(argc != 2) exiterr("Must specify server address\n");
-	char* SERVERHOST = argv[1];
+	char* SERVERHOST = strdup(argv[1]);
 
 	// Create the socket.
 	int sock = socket(PF_INET,SOCK_STREAM,0);
@@ -71,12 +71,13 @@ int main(int argc, char* argv[])
 
 	// Receive a job from the server
 	primeint* startnum;
-	primeint* endnum;	
-	read(sock,startnum,sizeof(primeint));
-	read(sock,endnum,sizeof(primeint));
+	primeint* endnum;
+	read(sock,(void*)startnum,sizeof(primeint));
+	read(sock,(void*)endnum,sizeof(primeint));
 	while(*startnum > 0)
 	{
-		numprimes = 0;		
+		/*
+		numprimes = 0;
 		threadargarray[0].startnum = *startnum;
 		threadargarray[0].endnum = (*endnum - *startnum) / LOCAL_THREADS + *startnum;
 		threadargarray[0].threadid = 0;
@@ -97,11 +98,16 @@ int main(int argc, char* argv[])
 			numintschkd = numintschkd + intschecked[j];
 			intschecked[j] = 0;
 		}
-
+		*/
+		printf("Startnum = %d\n",(int)*startnum);
+		printf("Endnum = %d\n",(int)*endnum);
+		sleep(1);
+		numintschkd = 10;
+		numprimes = 5;
 		write(sock,&numintschkd,sizeof(primeint));
 		write(sock,&numprimes,sizeof(primeint));
-		read(sock,&startnum,sizeof(primeint));
-		read(sock,&endnum,sizeof(primeint));
+		read(sock,(void*)startnum,sizeof(primeint));
+		read(sock,(void*)endnum,sizeof(primeint));
 	}
 
 	close(sock);

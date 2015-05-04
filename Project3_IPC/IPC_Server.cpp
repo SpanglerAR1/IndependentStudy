@@ -50,7 +50,7 @@ primeint	latest;		// Next int waiting to be sent in a job
 int main(int argc, char* argv[])
 {
 	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__IPC_VERSION_ID);
-	if(argc == 1) printf("Argument order: max int, job size, port.");
+	if(argc == 1) printf("Argument order: max int, job size, port.\n");
 	// Parse arguments
 	switch(argc)
 	{
@@ -157,16 +157,15 @@ int make_socket(uint16_t sockport)
 
 void send_job(int filedes)
 {
-	primeint jobstart = 0;	
+	primeint jobstart = 0;
 	primeint jobend = 0;
 	if(latest < maxint)
 	{
-		jobstart = latest;		
+		jobstart = latest;
 		jobend = latest + jobsize;
 		if(jobend > maxint) jobend = maxint;
 	}
-	
-	if(write(filedes,&jobstart,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");	
+	if(write(filedes,&jobstart,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
 	if(write(filedes,&jobend,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
 	printf("Sent job for %d to %d\n",(int)latest,(int)jobend);
 	latest = ++jobend;
