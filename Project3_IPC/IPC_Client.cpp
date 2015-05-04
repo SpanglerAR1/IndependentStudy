@@ -30,6 +30,7 @@ struct	threadarg_t
 threadarg_t	threadargarray[LOCAL_THREADS];
 primeint	numprimes;
 primeint	intschecked[LOCAL_THREADS];
+primeint	numintschkd;
 
 void*	chkprimes	(void* threadarg);
 int	isprime		(primeint num);
@@ -86,12 +87,18 @@ int main(int argc, char* argv[])
 		for(int i = 0; i < num_threads; i++)
 			if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]))
 				exiterr("Thread creation error!\n");
+
+		for(int j = 0; j < num_threads; j++)
+		{
+			numintschkd = numintschkd + intschecked[j];
+			intschecked[j] = 0;
+		}
 		
 	}while(*job != 0)
 
 
 	close(sock);
-	exit(EXIT_SUCCESS);
+	pthread_exit(NULL);
 }
 
 void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port)
@@ -100,44 +107,8 @@ void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port)
 	name->sin_family = AF_INET;
 	name->sin_port = htons (port);
 	hostinfo = gethostbyname (hostname);
-	if (hostinfo == NULL)
-	{
-		fprintf (stderr, "Unknown host %s.\n", hostname);
-		exit (EXIT_FAILURE);
-	}
+	if (hostinfo == NULL) exiterr("Unknown host\n");
 	name->sin_addr = *(struct in_addr *) hostinfo->h_addr;
-}
-
-
-
-
-
-
-
-int main(int argc, char* argv[])
-{
-
-	primeint numintschkd = 0;
-	while(1)
-	{
-		//end = clock();
-		//cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-		//printf("Primes per second: %0.2f\t",((double) numprimes) / cpu_time_used);
-		for(int j = 0; j < num_threads; j++)
-		{
-			printf("Worker %d: %d\t",j,intschecked[j]);
-			numintschkd = numintschkd + intschecked[j];
-			intschecked[j] = 0;
-		}
-		printf("%d integers examined.\n",(int)numintschkd);
-		primeint oldnumprimes = numprimes;
-		sleep(1);
-		primeint newnumprimes = numprimes;
-		if(oldnumprimes == newnumprimes) break;
-	}
-
-	printf("\n");
-	pthread_exit(NULL);
 }
 
 void*	chkprimes	(void* threadarg)
@@ -164,5 +135,3 @@ int isprime(primeint num)
 	for (i=5; i*i<=num; i=i+2) if (num % i == 0) return 0;
 	return 1;
 }
-
-*/
