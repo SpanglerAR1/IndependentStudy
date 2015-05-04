@@ -34,7 +34,7 @@ void* xmalloc(size_t size)
 //These two functions, along with some of main(), come from the GNU C library manual
 int 	make_socket		(uint16_t port);
 void	send_job		(int filedes);
-void	receive_results		(int filedes);
+int		receive_results		(int filedes);
 
 
 typedef	unsigned long long int	primeint;
@@ -43,12 +43,13 @@ primeint	maxint;
 primeint	jobsize;
 int		port;
 
-primeint	numprimes;
-primeint	numints;
+primeint	numprimes;	// Number of primes found
+primeint	numints;	// Number of ints actually checked
+primeint	latest;		// Next int waiting to be sent in a job
 
 int main(int argc, char* argv[])
 {
-	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__FR_VERSION_ID);
+	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__IPC_VERSION_ID);
 	if(argc == 1) printf("Argument order: max int, job size, port.");
 	// Parse arguments
 	switch(argc)
@@ -63,7 +64,7 @@ int main(int argc, char* argv[])
 			if(atol(argv[1]) > 0) maxint = atol(argv[1]);
 			else maxint = MAX_INT;
 			jobsize = JOB_SIZE;
-			port = PORT
+			port = PORT;
 			break;
 		case 3:
 			if(atol(argv[1]) > 0) maxint = atol(argv[1]);
@@ -81,16 +82,16 @@ int main(int argc, char* argv[])
 			else port = PORT;
 	}
 
-	printf("Today, I will be generating primes up to %d, ",maxint);
-	printf("using a batch size of %d integers.\n",jobsize);
+	printf("Today, I will be generating primes up to %d, ",(int)maxint);
+	printf("using a batch size of %d integers.\n",(int)jobsize);
 
-	primeint latest = 5;
+	latest = 5;
 	numprimes = 0;
 	numints = 0;
 
 	// Set up listening functionality
 	int sock = make_socket(port);
-	if(listen(sock,MAXCLIENTS) < 0) exiterr("Failed to set up listening functionality on the server side\n");
+	if(listen(sock,MAX_CLIENTS) < 0) exiterr("Failed to set up listening functionality on the server side\n");
 	fd_set allfds;
 	fd_set waitingfds;
 	// Initialize allfds to zero
@@ -111,7 +112,7 @@ int main(int argc, char* argv[])
 			{
 				if (i == sock)
 				{
-					/* Connection request on original socket. */
+					// Connection request on original socket.
 					int receivesocket;
 					struct sockaddr_in clientname;
 					size_t size;
@@ -124,16 +125,17 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					/* Data arriving on an already-connected socket. */
+					// Data arriving on an already-connected socket.
 					if(receive_results(i) < 0)
 					{
 						close(i);
 						FD_CLR(i,&allfds);
 					}
+					else send_job(i);
 				}
 			}
 		}
-		printf("Number of ints checked: %d\n",numints);
+		printf("Number of ints checked: %d\n",(int)numints);
 	}
 	return 0;
 }
@@ -155,22 +157,22 @@ int make_socket(uint16_t sockport)
 
 void send_job(int filedes)
 {
-	primeint jobend = latest + jobsize;
-	if(jobend > maxint) jobend = maxint;
-	// a primeint is 8 bytes on my system
-	size_t transmissionsize = 16;
-	char* transmission = (char*)xmalloc(transmissionsize);
-	primeint* primeptr = (primeint*)transmission;
-	*primeptr = jobstart;
-	primeptr++;
-	*primeptr = jobend;
-	ssize_t actuallywritten = write(filedes,transmission,16);
-	if(actuallywritten == -1) exiterr("Write operation failed in send_job");
-	printf("Sent job for %d to %d",(int)jobstart,(int)jobend);
-	free(transmission);
+	primeint jobstart = 0;	
+	primeint jobend = 0;
+	if(latest < maxint)
+	{
+		jobstart = latest;		
+		jobend = latest + jobsize;
+		if(jobend > maxint) jobend = maxint;
+	}
+	
+	if(write(filedes,&jobstart,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");	
+	if(write(filedes,&jobend,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
+	printf("Sent job for %d to %d\n",(int)latest,(int)jobend);
+	latest = ++jobend;
 }
 
-void receive_results(int filedes)
+int receive_results(int filedes)
 {
 	primeint* buffer = (primeint*)xmalloc(sizeof(primeint) * 2);
 	int nbytes = read(filedes,buffer,sizeof(primeint) * 2);
@@ -182,7 +184,7 @@ void receive_results(int filedes)
 		buffer++;
 		numprimes += *buffer;
 		buffer--;
-		send_job(filedes);
 	}
 	free(buffer);
+	printf("Number of ints checked: %d\tNumber of primes: %d\n",(int)numints,(int)numprimes);
 }
