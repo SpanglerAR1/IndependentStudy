@@ -24,16 +24,27 @@ void exiterr(const char* message)
 	exit(EXIT_FAILURE);
 }
 
+void* xmalloc(size_t size)
+{
+	void* newptr = malloc(size);
+	if(newptr == NULL) exiterr("Malloc error");
+	else return newptr;
+}
+
 //These two functions, along with some of main(), come from the GNU C library manual
 int 	make_socket		(uint16_t port);
-int	send_job		(int filedes, primeint jobstart, primeint jobend);
-int	read_from_client	(int filedes);
+void	send_job		(int filedes);
+void	receive_results		(int filedes);
+
 
 typedef	unsigned long long int	primeint;
 
 primeint	maxint;
 primeint	jobsize;
 int		port;
+
+primeint	numprimes;
+primeint	numints;
 
 int main(int argc, char* argv[])
 {
@@ -74,6 +85,8 @@ int main(int argc, char* argv[])
 	printf("using a batch size of %d integers.\n",jobsize);
 
 	primeint latest = 5;
+	numprimes = 0;
+	numints = 0;
 
 	// Set up listening functionality
 	int sock = make_socket(port);
@@ -107,14 +120,12 @@ int main(int argc, char* argv[])
 					if (receivesocket < 0) exiterr("Incoming connection attempt failed, server accept function\n");
 					printf ("Server: connect from host %s, port %d.\n",inet_ntoa (clientname.sin_addr),ntohs(clientname.sin_port));
 					FD_SET(receivesocket,&allfds);
-					primeint jobend = latest + jobsize;
-					if(jobend > maxint) jobend = maxint;
-					send_job(receivesocket,latest,jobend);
+					send_job(receivesocket);
 				}
 				else
 				{
 					/* Data arriving on an already-connected socket. */
-					if(read_from_client(i) < 0)
+					if(receive_results(i) < 0)
 					{
 						close(i);
 						FD_CLR(i,&allfds);
@@ -122,8 +133,7 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-
-
+		printf("Number of ints checked: %d\n",numints);
 	}
 	return 0;
 }
@@ -143,147 +153,36 @@ int make_socket(uint16_t sockport)
 	return sock;
 }
 
-int	send_job		(int filedes, primeint jobstart, primeint jobend)
+void send_job(int filedes)
 {
-	fprintf
-	return 0;
+	primeint jobend = latest + jobsize;
+	if(jobend > maxint) jobend = maxint;
+	// a primeint is 8 bytes on my system
+	size_t transmissionsize = 16;
+	char* transmission = (char*)xmalloc(transmissionsize);
+	primeint* primeptr = (primeint*)transmission;
+	*primeptr = jobstart;
+	primeptr++;
+	*primeptr = jobend;
+	ssize_t actuallywritten = write(filedes,transmission,16);
+	if(actuallywritten == -1) exiterr("Write operation failed in send_job");
+	printf("Sent job for %d to %d",(int)jobstart,(int)jobend);
+	free(transmission);
 }
 
-
-int read_from_client(int filedes)
+void receive_results(int filedes)
 {
-	printf("In function read_from_client2\n");
-	char buffer[MAXMSG];
-	printf("MAXMSG=%d\n",MAXMSG);
-	int nbytes;
-	nbytes = read(filedes,buffer,MAXMSG);
-	if (nbytes < 0)
-	{
-		perror ("Server side read error\n");
-		exit (EXIT_FAILURE);
-	}
+	primeint* buffer = (primeint*)xmalloc(sizeof(primeint) * 2);
+	int nbytes = read(filedes,buffer,sizeof(primeint) * 2);
+	if(nbytes < 0) exiterr("Server side read error\n");
 	else if (nbytes == 0) return -1; // End-of-file.
 	else
 	{
-		/* Data read. */
-		printf("%s",buffer);
-		return 0;
+		numints += *buffer;
+		buffer++;
+		numprimes += *buffer;
+		buffer--;
+		send_job(filedes);
 	}
+	free(buffer);
 }
-
-
-
-/*
-#include<stdio.h>
-#include<unistd.h>
-#include<time.h>
-#include<pthread.h>
-#include<stdlib.h>
-
-#define MAX_INT			5000000
-#define	REMOTE_HOSTS		4
-#define LOCAL_THREADS		12
-
-typedef	unsigned long long int	primeint;
-
-struct	threadarg_t
-{
-	int		threadid;
-	primeint	startnum;
-	primeint	endnum;
-};
-
-threadarg_t	threadargarray[LOCAL_THREADS];
-primeint	numprimes;
-primeint	intschecked[LOCAL_THREADS];
-
-void*	chkprimes	(void* threadarg);
-int	isprime		(primeint num);
-
-int main(int argc, char* argv[])
-{
-	if((argc == 2) && (argv[1] == "master"))
-	{
-		num_threads = atol(argv[1]);
-		if(num_threads == 0) num_threads = NUM_THREADS;
-	}
-	else num_threads = NUM_THREADS;
-	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__FR_VERSION_ID);
-	printf("Today, I will be generating primes up to %d, ",MAX_INT);
-	printf("using %d threads.\n",num_threads);
-
-	clock_t start = clock();
-	clock_t end;
-	double cpu_time_used = 0;
-
-	numprimes = 0;
-	intschecked[0] = 0;
-	pthread_t threads[NUM_THREADS];
-	threadargarray[0].startnum = 0;
-	threadargarray[0].endnum = MAX_INT / num_threads;
-	threadargarray[0].threadid = 0;
-	printf("Worker 0 will be iterating through %d to %d\n",threadargarray[0].startnum,threadargarray[0].endnum);
-	for(int n = 1; n < num_threads; n++)
-	{
-		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
-		threadargarray[n].endnum = MAX_INT/num_threads * (n + 1);
-		printf("Worker %d will be iterating through %d to %d\n",n,threadargarray[n].startnum,threadargarray[n].endnum);
-		intschecked[n] = 0;
-		threadargarray[n].threadid = n;
-	}
-
-	for(int i = 0; i < num_threads; i++)
-	{
-		if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i])) printf("Thread creation error!\n");
-		else printf("Thread %d creation succeeded\n",i);
-	}
-
-	primeint numintschkd = 0;
-	while(1)
-	{
-		//end = clock();
-		//cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-		//printf("Primes per second: %0.2f\t",((double) numprimes) / cpu_time_used);
-		for(int j = 0; j < num_threads; j++)
-		{
-			printf("Worker %d: %d\t",j,intschecked[j]);
-			numintschkd = numintschkd + intschecked[j];
-			intschecked[j] = 0;
-		}
-		printf("%d integers examined.\n",(int)numintschkd);
-		primeint oldnumprimes = numprimes;
-		sleep(1);
-		primeint newnumprimes = numprimes;
-		if(oldnumprimes == newnumprimes) break;
-	}
-
-	printf("\n");
-	pthread_exit(NULL);
-}
-
-void*	chkprimes	(void* threadarg)
-{
-	threadarg_t* input_arguments = (threadarg_t*)threadarg;
-	primeint startnum = input_arguments->startnum;
-	primeint endnum = input_arguments->endnum;
-	primeint currentnum = startnum;
-	while(currentnum <= endnum)
-	{
-		if(isprime(currentnum)) numprimes++;
-		intschecked[input_arguments->threadid] += 1;
-		currentnum++;
-	}
-	pthread_exit(NULL);
-}
-
-int isprime(primeint num)
-{
-	if(num <= 1) return 0; // zero and one are not prime
-	if((num == 2) || (num == 3)) return 1;
-	if(!(num & 1)) return 0; // If a binary number is even, i.e. has a 0 in the LSB, it is divisible by 2 and not prime. 
-	unsigned int i;
-	for (i=5; i*i<=num; i=i+2) if (num % i == 0) return 0;
-	return 1;
-}
-
-*/

@@ -13,59 +13,85 @@
 #include	<arpa/inet.h>
 #include	<netdb.h>
 #include	<string.h>
+#include	<pthread.h>
 
 #define 	PORT		3000
-#define 	MESSAGE		"Yow!!! Are we having fun yet?!?"
+#define 	LOCAL_THREADS	12
 
-void	write_to_server	(int filedes);
+typedef	unsigned long long int	primeint;
+
+struct	threadarg_t
+{
+	int		threadid;
+	primeint	startnum;
+	primeint	endnum;
+};
+
+threadarg_t	threadargarray[LOCAL_THREADS];
+primeint	numprimes;
+primeint	intschecked[LOCAL_THREADS];
+
+void*	chkprimes	(void* threadarg);
+int	isprime		(primeint num);
+
+void	exiterr(const char* message)
+{
+	perror(message);
+	exit(EXIT_FAILURE);
+}
+
+void*	xmalloc(size_t size)
+{
+	void* newptr = malloc(size);
+	if(newptr == NULL) exiterr("Call to malloc failed, no mem");
+	return newptr;
+}
+
 void 	init_sockaddr	(struct sockaddr_in *name,const char *hostname,uint16_t port);
 
 int main(int argc, char* argv[])
 {
-	if(argc != 2)
-	{
-		perror("Must specify server address\n");
-		exit(EXIT_FAILURE);
-	}
+	if(argc != 2) exiterr("Must specify server address\n");
 	char* SERVERHOST = argv[1];
 
-	//extern void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port);
+	// Create the socket.
+	int sock = socket(PF_INET,SOCK_STREAM,0);
+	if (sock < 0) exiterr("Socket creation failure, client side\n");
 
-	/* Create the socket. */
-	int sock;
-	sock = socket(PF_INET,SOCK_STREAM,0);
-	if (sock < 0)
-	{
-		perror ("socket creation failure, client side\n");
-		exit (EXIT_FAILURE);
-	}
-
-	/* Connect to the server. */
+	// Connect to the server.
 	struct sockaddr_in servername;
 	init_sockaddr(&servername,SERVERHOST,PORT);
-	if (0 > connect(sock,(struct sockaddr *) &servername,sizeof (servername)))
-	{
-		perror ("Client side connection failure\n");
-		exit (EXIT_FAILURE);
-	}
+	if (0 > connect(sock, (struct sockaddr*)&servername, sizeof(servername)) ) exiterr("Client side connection failure\n");
 
-	/* Send data to the server. */
-	write_to_server (sock);
-	close (sock);
-	exit (EXIT_SUCCESS);
-}
+	// Initialize local data structures and create threads
+	numprimes = 0;
+	intschecked[0] = 0;
+	pthread_t threads[NUM_THREADS];
 
-void	write_to_server	(int filedes)
-{
-	int nbytes;
-	printf("Writing message %s to server\n",MESSAGE);
-	nbytes = write(filedes, MESSAGE, strlen(MESSAGE) + 1);
-	printf("Number of bytes written: %d\n",nbytes);
-	if (nbytes < 0)
+	// Receive a job from the server
+	primeint* job = (primeint*)xmalloc(sizeof(primeint) * 2);
+	do
 	{
-		perror ("Client side write error\n");
-		exit (EXIT_FAILURE);
-	}
+		read(sock,job,sizeof(primeint) * 2);
+		threadargarray[0].startnum = *job;
+		threadargarray[0].endnum = MAX_INT / num_threads;
+		threadargarray[0].threadid = 0;
+		for(int n = 1; n < num_threads; n++)
+		{
+			threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
+			threadargarray[n].endnum = MAX_INT/num_threads * (n + 1);
+			intschecked[n] = 0;
+			threadargarray[n].threadid = n;
+		}
+		for(int i = 0; i < num_threads; i++)
+			if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]))
+				exiterr("Thread creation error!\n");
+		
+	}while(*job != 0)
+
+
+	close(sock);
+	exit(EXIT_SUCCESS);
 }
 
 void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port)
@@ -84,70 +110,12 @@ void init_sockaddr(struct sockaddr_in *name,const char *hostname,uint16_t port)
 
 
 
-/*
-#include<stdio.h>
-#include<unistd.h>
-#include<time.h>
-#include<pthread.h>
-#include<stdlib.h>
 
-#define MAX_INT			5000000
-#define	REMOTE_HOSTS		4
-#define LOCAL_THREADS		12
 
-typedef	unsigned long long int	primeint;
 
-struct	threadarg_t
-{
-	int		threadid;
-	primeint	startnum;
-	primeint	endnum;
-};
-
-threadarg_t	threadargarray[LOCAL_THREADS];
-primeint	numprimes;
-primeint	intschecked[LOCAL_THREADS];
-
-void*	chkprimes	(void* threadarg);
-int	isprime		(primeint num);
 
 int main(int argc, char* argv[])
 {
-	if((argc == 2) && (argv[1] == "master"))
-	{
-		num_threads = atol(argv[1]);
-		if(num_threads == 0) num_threads = NUM_THREADS;
-	}
-	else num_threads = NUM_THREADS;
-	printf("Welcome to Adam Spangler's prime number generator, version %s\n",__FR_VERSION_ID);
-	printf("Today, I will be generating primes up to %d, ",MAX_INT);
-	printf("using %d threads.\n",num_threads);
-
-	clock_t start = clock();
-	clock_t end;
-	double cpu_time_used = 0;
-
-	numprimes = 0;
-	intschecked[0] = 0;
-	pthread_t threads[NUM_THREADS];
-	threadargarray[0].startnum = 0;
-	threadargarray[0].endnum = MAX_INT / num_threads;
-	threadargarray[0].threadid = 0;
-	printf("Worker 0 will be iterating through %d to %d\n",threadargarray[0].startnum,threadargarray[0].endnum);
-	for(int n = 1; n < num_threads; n++)
-	{
-		threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
-		threadargarray[n].endnum = MAX_INT/num_threads * (n + 1);
-		printf("Worker %d will be iterating through %d to %d\n",n,threadargarray[n].startnum,threadargarray[n].endnum);
-		intschecked[n] = 0;
-		threadargarray[n].threadid = n;
-	}
-
-	for(int i = 0; i < num_threads; i++)
-	{
-		if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i])) printf("Thread creation error!\n");
-		else printf("Thread %d creation succeeded\n",i);
-	}
 
 	primeint numintschkd = 0;
 	while(1)
