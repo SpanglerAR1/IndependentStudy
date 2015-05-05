@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	// Connect to the server.
 	struct sockaddr_in servername;
 	init_sockaddr(&servername,SERVERHOST,PORT);
-	if (0 > connect(sock, (struct sockaddr*)&servername, sizeof(servername)) ) exiterr("Client side connection failure\n");
+	while(0 > connect(sock, (struct sockaddr*)&servername, sizeof(servername)) ) sleep(1);
 
 	// Initialize local data structures and create threads
 	numprimes = 0;
@@ -72,44 +72,51 @@ int main(int argc, char* argv[])
 	// Receive a job from the server
 	primeint* startnum;
 	primeint* endnum;
-	read(sock,(void*)startnum,sizeof(primeint));
-	read(sock,(void*)endnum,sizeof(primeint));
-	while(*startnum > 0)
-	{
-		/*
-		numprimes = 0;
-		threadargarray[0].startnum = *startnum;
-		threadargarray[0].endnum = (*endnum - *startnum) / LOCAL_THREADS + *startnum;
-		threadargarray[0].threadid = 0;
-		for(int n = 1; n < LOCAL_THREADS; n++)
-		{
-			threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
-			threadargarray[n].endnum = ((*endnum - *startnum) / LOCAL_THREADS) * (n + 1) + *startnum;
-			intschecked[n] = 0;
-			threadargarray[n].threadid = n;
-		}
-		for(int i = 0; i < LOCAL_THREADS; i++)
-			if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]))
-				exiterr("Thread creation error!\n");
-
-		for(int j = 0; j < LOCAL_THREADS; j++)
-		{
-			pthread_join(threads[j],NULL);
-			numintschkd = numintschkd + intschecked[j];
-			intschecked[j] = 0;
-		}
-		*/
-		printf("Startnum = %d\n",(int)*startnum);
-		printf("Endnum = %d\n",(int)*endnum);
-		sleep(1);
-		numintschkd = 10;
-		numprimes = 5;
-		write(sock,&numintschkd,sizeof(primeint));
-		write(sock,&numprimes,sizeof(primeint));
+//	while(1)
+//	{
 		read(sock,(void*)startnum,sizeof(primeint));
 		read(sock,(void*)endnum,sizeof(primeint));
-	}
+		printf("Startnum = %d\n",(int)*startnum);
+		printf("Endnum = %d\n",(int)*endnum);
+		while(*startnum > 0)
+		{
+			numprimes = 0;
+			threadargarray[0].startnum = *startnum;
+			threadargarray[0].endnum = (*endnum - *startnum) / LOCAL_THREADS + *startnum;
+			threadargarray[0].threadid = 0;
+			printf("Thread 0: %d to %d\n",(int)threadargarray[0].startnum,(int)threadargarray[0].endnum);
+			for(int n = 1; n < LOCAL_THREADS; n++)
+			{
+				threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
+				threadargarray[n].endnum = ((*endnum - *startnum) / LOCAL_THREADS) * (n + 1) + *startnum;
+				intschecked[n] = 0;
+				threadargarray[n].threadid = n;
+				printf("Thread %d: %d to %d\n",n,(int)threadargarray[n].startnum,(int)threadargarray[n].endnum);
+			}
+			threadargarray[LOCAL_THREADS - 1].endnum = *endnum;
+			printf("Thread %d: %d to %d\n",LOCAL_THREADS - 1,(int)threadargarray[LOCAL_THREADS - 1].startnum,(int)threadargarray[LOCAL_THREADS - 1].endnum);
 
+			for(int i = 0; i < LOCAL_THREADS; i++)
+				if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]))
+					exiterr("Thread creation error!\n");
+
+			for(int j = 0; j < LOCAL_THREADS; j++)
+			{
+				pthread_join(threads[j],NULL);
+				numintschkd = numintschkd + intschecked[j];
+				intschecked[j] = 0;
+			}
+
+			write(sock,&numintschkd,sizeof(primeint));
+			write(sock,&numprimes,sizeof(primeint));
+			numintschkd = 0;
+			numprimes = 0;
+			read(sock,(void*)startnum,sizeof(primeint));
+			read(sock,(void*)endnum,sizeof(primeint));
+			printf("Startnum = %d\n",(int)*startnum);
+			printf("Endnum = %d\n",(int)*endnum);
+		}
+//	}
 	close(sock);
 	pthread_exit(NULL);
 }

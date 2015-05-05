@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 	printf("Today, I will be generating primes up to %d, ",(int)maxint);
 	printf("using a batch size of %d integers.\n",(int)jobsize);
 
-	latest = 5;
+	latest = 1;
 	numprimes = 0;
 	numints = 0;
 
@@ -100,7 +100,8 @@ int main(int argc, char* argv[])
 	FD_SET(sock, &allfds);
 	waitingfds = allfds;
 
-	while(latest < maxint)
+	int numclients = 0;
+	while((latest <= maxint) || numclients)
 	{
 		/* Block until input arrives on one or more active sockets. */
 		printf("Waiting for input\n");
@@ -122,6 +123,7 @@ int main(int argc, char* argv[])
 					printf ("Server: connect from host %s, port %d.\n",inet_ntoa (clientname.sin_addr),ntohs(clientname.sin_port));
 					FD_SET(receivesocket,&allfds);
 					send_job(receivesocket);
+					numclients++;
 				}
 				else
 				{
@@ -129,13 +131,13 @@ int main(int argc, char* argv[])
 					if(receive_results(i) < 0)
 					{
 						close(i);
+						numclients--;
 						FD_CLR(i,&allfds);
 					}
 					else send_job(i);
 				}
 			}
 		}
-		printf("Number of ints checked: %d\n",(int)numints);
 	}
 	return 0;
 }
@@ -164,26 +166,25 @@ void send_job(int filedes)
 		jobstart = latest;
 		jobend = latest + jobsize;
 		if(jobend > maxint) jobend = maxint;
+		latest = jobend + 1;
 	}
 	if(write(filedes,&jobstart,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
 	if(write(filedes,&jobend,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
-	printf("Sent job for %d to %d\n",(int)latest,(int)jobend);
-	latest = ++jobend;
+	printf("Sent job for %d to %d\n",(int)jobstart,(int)jobend);
 }
 
 int receive_results(int filedes)
 {
-	primeint* buffer = (primeint*)xmalloc(sizeof(primeint) * 2);
-	int nbytes = read(filedes,buffer,sizeof(primeint) * 2);
-	if(nbytes < 0) exiterr("Server side read error\n");
+	primeint workerints = 0;
+	primeint workerprimes = 0;
+	size_t nbytes = read(filedes,&workerints,sizeof(primeint));
+	if(nbytes < 0) exiterr("Server side read error");
 	else if (nbytes == 0) return -1; // End-of-file.
 	else
 	{
-		numints += *buffer;
-		buffer++;
-		numprimes += *buffer;
-		buffer--;
+		read(filedes,&workerprimes,sizeof(primeint));
+		numints += workerints;
+		numprimes += workerprimes;
 	}
-	free(buffer);
 	printf("Number of ints checked: %d\tNumber of primes: %d\n",(int)numints,(int)numprimes);
 }
