@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 	while((latest <= maxint) || numclients)
 	{
 		/* Block until input arrives on one or more active sockets. */
-		printf("Waiting for input\n");
+		//printf("Waiting for input\n");
 		waitingfds = allfds;
 		if(select(FD_SETSIZE, &waitingfds, NULL, NULL, NULL) < 0) exiterr("Select error: failed to wait for input on server side\n");
 		for (int i = 0; i < FD_SETSIZE; ++i)

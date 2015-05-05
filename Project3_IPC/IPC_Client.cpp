@@ -70,32 +70,33 @@ int main(int argc, char* argv[])
 	pthread_t threads[LOCAL_THREADS];
 
 	// Receive a job from the server
-	primeint* startnum;
-	primeint* endnum;
+	primeint startnum;
+	primeint endnum;
+	primeint scratch;
 //	while(1)
 //	{
-		read(sock,(void*)startnum,sizeof(primeint));
-		read(sock,(void*)endnum,sizeof(primeint));
-		*startnum = ntohl(*startnum);
-		*endnum = ntohl(*endnum);
-		printf("Startnum = %d\n",(int)*startnum);
-		printf("Endnum = %d\n",(int)*endnum);
-		while(*startnum > 0)
+		read(sock,&scratch,sizeof(primeint));
+		startnum = ntohl(scratch);
+		read(sock,&scratch,sizeof(primeint));
+		endnum = ntohl(scratch);
+		printf("Startnum = %d\n",(int)startnum);
+		printf("Endnum = %d\n",(int)endnum);
+		while(startnum > 0)
 		{
 			numprimes = 0;
-			threadargarray[0].startnum = *startnum;
-			threadargarray[0].endnum = (*endnum - *startnum) / LOCAL_THREADS + *startnum;
+			threadargarray[0].startnum = startnum;
+			threadargarray[0].endnum = (endnum - startnum) / LOCAL_THREADS + startnum;
 			threadargarray[0].threadid = 0;
 			printf("Thread 0: %d to %d\n",(int)threadargarray[0].startnum,(int)threadargarray[0].endnum);
 			for(int n = 1; n < LOCAL_THREADS; n++)
 			{
 				threadargarray[n].startnum = threadargarray[n-1].endnum + 1;
-				threadargarray[n].endnum = ((*endnum - *startnum) / LOCAL_THREADS) * (n + 1) + *startnum;
+				threadargarray[n].endnum = ((endnum - startnum) / LOCAL_THREADS) * (n + 1) + startnum;
 				intschecked[n] = 0;
 				threadargarray[n].threadid = n;
 				printf("Thread %d: %d to %d\n",n,(int)threadargarray[n].startnum,(int)threadargarray[n].endnum);
 			}
-			threadargarray[LOCAL_THREADS - 1].endnum = *endnum;
+			threadargarray[LOCAL_THREADS - 1].endnum = endnum;
 
 			for(int i = 0; i < LOCAL_THREADS; i++)
 				if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]))
@@ -107,6 +108,7 @@ int main(int argc, char* argv[])
 				numintschkd = numintschkd + intschecked[j];
 				intschecked[j] = 0;
 			}
+
 			numintschkd = htonl(numintschkd);
 			numprimes = htonl(numprimes);
 
@@ -114,12 +116,12 @@ int main(int argc, char* argv[])
 			write(sock,&numprimes,sizeof(primeint));
 			numintschkd = 0;
 			numprimes = 0;
-			read(sock,(void*)startnum,sizeof(primeint));
-			read(sock,(void*)endnum,sizeof(primeint));
-			*startnum = ntohl(*startnum);
-			*endnum = ntohl(*endnum);
-			printf("Startnum = %d\n",(int)*startnum);
-			printf("Endnum = %d\n",(int)*endnum);
+			read(sock,&scratch,sizeof(primeint));
+			startnum = ntohl(scratch);
+			read(sock,&scratch,sizeof(primeint));
+			endnum = ntohl(scratch);
+			printf("Startnum = %d\n",(int)startnum);
+			printf("Endnum = %d\n",(int)endnum);
 		}
 //	}
 	close(sock);
