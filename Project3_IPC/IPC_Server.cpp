@@ -37,7 +37,7 @@ void	send_job		(int filedes);
 int		receive_results		(int filedes);
 
 
-typedef	unsigned long long int	primeint;
+typedef	unsigned long int	primeint;
 
 primeint	maxint;
 primeint	jobsize;
@@ -168,9 +168,10 @@ void send_job(int filedes)
 		if(jobend > maxint) jobend = maxint;
 		latest = jobend + 1;
 	}
+	jobstart = htonl(jobstart);
+	jobend = htonl(jobend);
 	if(write(filedes,&jobstart,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
 	if(write(filedes,&jobend,sizeof(primeint)) == -1) exiterr("Write operation failed in send_job");
-	printf("Sent job for %d to %d\n",(int)jobstart,(int)jobend);
 }
 
 int receive_results(int filedes)
@@ -183,8 +184,8 @@ int receive_results(int filedes)
 	else
 	{
 		read(filedes,&workerprimes,sizeof(primeint));
-		numints += workerints;
-		numprimes += workerprimes;
+		numints += ntohl(workerints);
+		numprimes += ntohl(workerprimes);
 	}
 	printf("Number of ints checked: %d\tNumber of primes: %d\n",(int)numints,(int)numprimes);
 }

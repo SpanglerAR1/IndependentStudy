@@ -18,7 +18,7 @@
 #define 	PORT		3000
 #define 	LOCAL_THREADS	12
 
-typedef	unsigned long long int	primeint;
+typedef	unsigned long int	primeint;
 
 struct	threadarg_t
 {
@@ -76,6 +76,8 @@ int main(int argc, char* argv[])
 //	{
 		read(sock,(void*)startnum,sizeof(primeint));
 		read(sock,(void*)endnum,sizeof(primeint));
+		*startnum = ntohl(*startnum);
+		*endnum = ntohl(*endnum);
 		printf("Startnum = %d\n",(int)*startnum);
 		printf("Endnum = %d\n",(int)*endnum);
 		while(*startnum > 0)
@@ -94,7 +96,6 @@ int main(int argc, char* argv[])
 				printf("Thread %d: %d to %d\n",n,(int)threadargarray[n].startnum,(int)threadargarray[n].endnum);
 			}
 			threadargarray[LOCAL_THREADS - 1].endnum = *endnum;
-			printf("Thread %d: %d to %d\n",LOCAL_THREADS - 1,(int)threadargarray[LOCAL_THREADS - 1].startnum,(int)threadargarray[LOCAL_THREADS - 1].endnum);
 
 			for(int i = 0; i < LOCAL_THREADS; i++)
 				if(pthread_create(&threads[i],NULL,chkprimes,(void*)&threadargarray[i]))
@@ -106,6 +107,8 @@ int main(int argc, char* argv[])
 				numintschkd = numintschkd + intschecked[j];
 				intschecked[j] = 0;
 			}
+			numintschkd = htonl(numintschkd);
+			numprimes = htonl(numprimes);
 
 			write(sock,&numintschkd,sizeof(primeint));
 			write(sock,&numprimes,sizeof(primeint));
@@ -113,6 +116,8 @@ int main(int argc, char* argv[])
 			numprimes = 0;
 			read(sock,(void*)startnum,sizeof(primeint));
 			read(sock,(void*)endnum,sizeof(primeint));
+			*startnum = ntohl(*startnum);
+			*endnum = ntohl(*endnum);
 			printf("Startnum = %d\n",(int)*startnum);
 			printf("Endnum = %d\n",(int)*endnum);
 		}
