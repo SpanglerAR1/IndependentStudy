@@ -18,7 +18,7 @@
 #define 	PORT		3000
 #define 	LOCAL_THREADS	12
 
-typedef	unsigned long int	primeint;
+typedef	uint32_t	primeint;
 
 struct	threadarg_t
 {

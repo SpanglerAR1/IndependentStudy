@@ -37,7 +37,7 @@ void	send_job		(int filedes);
 int		receive_results		(int filedes);
 
 
-typedef	unsigned long int	primeint;
+typedef	uint32_t	primeint;
 
 primeint	maxint;
 primeint	jobsize;
